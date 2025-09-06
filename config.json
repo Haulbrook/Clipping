@@ -1,0 +1,57 @@
+{
+  "app": {
+    "name": "Deep Roots Operations Dashboard",
+    "version": "1.0.0",
+    "description": "Unified dashboard for all Deep Roots Landscape operational tools"
+  },
+  "services": {
+    "inventory": {
+      "name": "Clippings - Inventory Management",
+      "description": "Search inventory, manage stock, track equipment",
+      "icon": "🌱",
+      "url": "YOUR_INVENTORY_SCRIPT_URL_HERE",
+      "color": "#4CAF50",
+      "keywords": ["inventory", "plants", "stock", "equipment", "supplies"]
+    },
+    "grading": {
+      "name": "Grade & Sell Decision Tool",
+      "description": "Plant quality assessment and pricing decisions",
+      "icon": "⭐",
+      "url": "YOUR_GRADING_SCRIPT_URL_HERE",
+      "color": "#FF9800",
+      "keywords": ["grade", "quality", "pricing", "assessment", "sell", "plants"]
+    },
+    "scheduler": {
+      "name": "Daily Scheduler",
+      "description": "Crew scheduling and task management",
+      "icon": "📅",
+      "url": "YOUR_SCHEDULER_SCRIPT_URL_HERE",
+      "color": "#2196F3",
+      "keywords": ["schedule", "crew", "tasks", "calendar", "planning"]
+    },
+    "tools": {
+      "name": "Tool Rental Checkout",
+      "description": "Hand tool rental and checkout system",
+      "icon": "🔧",
+      "url": "YOUR_TOOLS_SCRIPT_URL_HERE",
+      "color": "#9C27B0",
+      "keywords": ["tools", "rental", "checkout", "equipment", "maintenance"]
+    }
+  },
+  "ai": {
+    "enabled": true,
+    "fallbackMessage": "I can help you with inventory, grading decisions, scheduling, or tool rentals. What would you like to do?",
+    "routingPrompt": "Analyze this query and determine which tool would be most helpful: inventory management, plant grading, scheduling, or tool checkout. Return only: 'inventory', 'grading', 'scheduler', 'tools', or 'general'."
+  },
+  "deployment": {
+    "github": {
+      "enabled": true,
+      "pages": true,
+      "actions": true
+    },
+    "googleAppsScript": {
+      "enabled": true,
+      "projectId": "YOUR_GAS_PROJECT_ID"
+    }
+  }
+}

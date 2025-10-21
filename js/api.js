@@ -88,19 +88,25 @@ class APIManager {
     }
 
     // Google Apps Script Integration
+    // NOTE: This calls the backend Google Apps Script via doPost()
+    // The script must be deployed as a web app with:
+    // - Execute as: User accessing the web app
+    // - Who has access: Anyone (or specific users)
     async callGoogleScript(scriptId, functionName, parameters = []) {
-        const endpoint = this.endpoints.get('inventory') || this.endpoints.get('grading') || this.endpoints.get('scheduler') || this.endpoints.get('tools');
-        
+        // Use the inventory endpoint as the primary backend
+        // All functions are routed through the same doPost() endpoint
+        const endpoint = this.endpoints.get('inventory');
+
         if (!endpoint) {
-            throw new Error('No Google Apps Script endpoint configured');
+            throw new Error('No Google Apps Script endpoint configured. Please add your script URL in config.json under services.inventory.url');
         }
-        
+
         const requestData = {
             function: functionName,
             parameters: parameters,
             devMode: false
         };
-        
+
         try {
             const response = await this.makeRequest('POST', endpoint, requestData);
             return this.handleGoogleScriptResponse(response);
@@ -112,11 +118,11 @@ class APIManager {
 
     async handleGoogleScriptResponse(response) {
         const data = await response.json();
-        
-        if (data.error) {
-            throw new Error(`Google Apps Script Error: ${data.error.message}`);
+
+        if (!data.success || data.error) {
+            throw new Error(`Google Apps Script Error: ${data.error?.message || 'Unknown error'}`);
         }
-        
+
         return data.response;
     }
 

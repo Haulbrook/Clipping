@@ -1,4 +1,5 @@
 {
+  "_comment": "DEPLOYMENT INSTRUCTIONS: 1) Deploy code.js to Google Apps Script as backend API, 2) Deploy this dashboard to GitHub Pages/Netlify, 3) Update the 'inventory' URL below with your Google Apps Script deployment URL",
   "app": {
     "name": "Deep Roots Operations Dashboard",
     "version": "1.0.0",
@@ -6,34 +7,38 @@
   },
   "services": {
     "inventory": {
+      "_comment": "REQUIRED: This is your primary backend. Deploy code.js to Google Apps Script and paste the Web App URL here. All API calls route through this endpoint.",
       "name": "Clippings - Inventory Management",
       "description": "Search inventory, manage stock, track equipment",
       "icon": "🌱",
-      "url": "YOUR_INVENTORY_SCRIPT_URL_HERE",
+      "url": "YOUR_GOOGLE_APPS_SCRIPT_WEB_APP_URL_HERE",
       "color": "#4CAF50",
       "keywords": ["inventory", "plants", "stock", "equipment", "supplies"]
     },
     "grading": {
+      "_comment": "OPTIONAL: If you have a separate grading tool, add its iframe URL here. Otherwise, leave as placeholder.",
       "name": "Grade & Sell Decision Tool",
       "description": "Plant quality assessment and pricing decisions",
       "icon": "⭐",
-      "url": "YOUR_GRADING_SCRIPT_URL_HERE",
+      "url": "",
       "color": "#FF9800",
       "keywords": ["grade", "quality", "pricing", "assessment", "sell", "plants"]
     },
     "scheduler": {
+      "_comment": "OPTIONAL: If you have a separate scheduler tool, add its iframe URL here. Otherwise, leave as placeholder.",
       "name": "Daily Scheduler",
       "description": "Crew scheduling and task management",
       "icon": "📅",
-      "url": "YOUR_SCHEDULER_SCRIPT_URL_HERE",
+      "url": "",
       "color": "#2196F3",
       "keywords": ["schedule", "crew", "tasks", "calendar", "planning"]
     },
     "tools": {
+      "_comment": "OPTIONAL: If you have a separate tools rental tool, add its iframe URL here. Otherwise, leave as placeholder.",
       "name": "Tool Rental Checkout",
       "description": "Hand tool rental and checkout system",
       "icon": "🔧",
-      "url": "YOUR_TOOLS_SCRIPT_URL_HERE",
+      "url": "",
       "color": "#9C27B0",
       "keywords": ["tools", "rental", "checkout", "equipment", "maintenance"]
     }
@@ -44,14 +49,16 @@
     "routingPrompt": "Analyze this query and determine which tool would be most helpful: inventory management, plant grading, scheduling, or tool checkout. Return only: 'inventory', 'grading', 'scheduler', 'tools', or 'general'."
   },
   "deployment": {
-    "github": {
-      "enabled": true,
-      "pages": true,
-      "actions": true
+    "_comment": "Deployment strategy: Backend (code.js) goes to Google Apps Script. Frontend (this dashboard) goes to GitHub Pages or Netlify.",
+    "backend": {
+      "platform": "Google Apps Script",
+      "file": "code.js",
+      "instructions": "Deploy code.js to Google Apps Script as a Web App, then update services.inventory.url with the deployment URL"
     },
-    "googleAppsScript": {
-      "enabled": true,
-      "projectId": "YOUR_GAS_PROJECT_ID"
+    "frontend": {
+      "platform": "GitHub Pages or Netlify",
+      "files": ["index.html", "js/", "styles/", "config.json"],
+      "instructions": "Deploy these files to static hosting. Update config.json with backend URL before deployment."
     }
   }
 }

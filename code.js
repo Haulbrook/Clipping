@@ -146,6 +146,89 @@ function doGet() {
 }
 
 // =============================
+// 🌐 API Endpoint: Handle POST requests from dashboard
+// =============================
+function doPost(e) {
+  try {
+    // Parse incoming request
+    const data = JSON.parse(e.postData.contents);
+    const functionName = data.function;
+    const params = data.parameters || [];
+
+    Logger.log("API Call: " + functionName + " with params: " + JSON.stringify(params));
+
+    // Route to the correct function
+    let result;
+    switch(functionName) {
+      case 'askInventory':
+        result = askInventory(params[0]);
+        break;
+
+      case 'updateInventory':
+        result = updateInventory(params[0]);
+        break;
+
+      case 'searchTruckInfo':
+        result = searchTruckInfo(params[0]);
+        break;
+
+      case 'searchKnowledgeBase':
+        result = searchKnowledgeBase(params[0]);
+        break;
+
+      case 'getInventoryReport':
+        result = getInventoryReport();
+        break;
+
+      case 'getFleetReport':
+        result = getFleetReport();
+        break;
+
+      case 'checkLowStock':
+        result = checkLowStock();
+        break;
+
+      case 'batchImportItems':
+        result = batchImportItems(params[0]);
+        break;
+
+      case 'findDuplicates':
+        result = findDuplicates();
+        break;
+
+      case 'mergeDuplicates':
+        result = mergeDuplicates(params[0], params[1], params[2]);
+        break;
+
+      default:
+        throw new Error('Unknown function: ' + functionName);
+    }
+
+    // Return successful response
+    return ContentService.createTextOutput(
+      JSON.stringify({
+        success: true,
+        response: result
+      })
+    ).setMimeType(ContentService.MimeType.JSON);
+
+  } catch (error) {
+    Logger.log("API Error: " + error.toString());
+
+    // Return error response
+    return ContentService.createTextOutput(
+      JSON.stringify({
+        success: false,
+        error: {
+          message: error.toString(),
+          stack: error.stack
+        }
+      })
+    ).setMimeType(ContentService.MimeType.JSON);
+  }
+}
+
+// =============================
 // 🔍 Master Function - Multi-tier search
 // =============================
 function askInventory(query) {

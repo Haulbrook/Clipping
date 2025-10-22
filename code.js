@@ -4,10 +4,10 @@
 const CONFIG = {
   INVENTORY_SHEET_ID: "18qeP1XG9sDtknL3UKc7bb2utHvnJNpYNKkfMNsSVDRQ", // Replace with your actual sheet ID
   KNOWLEDGE_BASE_SHEET_ID: "1I8Wp0xfcQCHLeJyIPsQoM2moebZUy35zNGBLzDLpl8Q", // Replace with your knowledge base sheet ID
-  TRUCK_SHEET_ID: "YOUR_TRUCK_SHEET_ID_HERE", // Replace with your truck sheet ID
+  TRUCK_SHEET_ID: "1AmyIFL74or_Nh0QLMu_n18YosrSP9E4EA6k5MTzlq1Y", // Replace with your truck sheet ID
   INVENTORY_SHEET_NAME: "Sheet1",
   KNOWLEDGE_SHEET_NAME: "Sheet1",
-  TRUCK_SHEET_NAME: "Sheet1",
+  TRUCK_SHEET_NAME: "Master",
   OPENAI_API_KEY: "", // Replace with your actual API key
   OPENAI_MODEL: "gpt-4",
   SYSTEM_PROMPT: "You are the internal operations assistant for Deep Roots Landscape, a landscaping company. " +

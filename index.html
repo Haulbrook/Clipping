@@ -258,9 +258,13 @@
     <script src="js/main.js"></script>
 
     <!-- Service Worker Registration -->
+    <!-- Only register service worker for static hosting (not in iframes or Google Apps Script) -->
     <script>
-        if ('serviceWorker' in navigator) {
-            navigator.serviceWorker.register('sw.js').catch(console.error);
+        if ('serviceWorker' in navigator && window.self === window.top) {
+            // Only register if we're the top-level window (not in an iframe)
+            navigator.serviceWorker.register('sw.js')
+                .then(reg => console.log('Service Worker registered:', reg))
+                .catch(err => console.log('Service Worker registration failed:', err));
         }
     </script>
 </body>

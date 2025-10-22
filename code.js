@@ -4,13 +4,49 @@
 const CONFIG = {
   INVENTORY_SHEET_ID: "18qeP1XG9sDtknL3UKc7bb2utHvnJNpYNKkfMNsSVDRQ", // Replace with your actual sheet ID
   KNOWLEDGE_BASE_SHEET_ID: "1I8Wp0xfcQCHLeJyIPsQoM2moebZUy35zNGBLzDLpl8Q", // Replace with your knowledge base sheet ID
-  TRUCK_SHEET_ID: "YOUR_TRUCK_SHEET_ID_HERE", // Replace with your truck sheet ID
+  TRUCK_SHEET_ID: "1AmyIFL74or_Nh0QLMu_n18YosrSP9E4EA6k5MTzlq1Y", // Replace with your truck sheet ID
   INVENTORY_SHEET_NAME: "Sheet1",
   KNOWLEDGE_SHEET_NAME: "Sheet1",
-  TRUCK_SHEET_NAME: "Sheet1",
+  TRUCK_SHEET_NAME: "Master",
   OPENAI_API_KEY: "", // Replace with your actual API key
   OPENAI_MODEL: "gpt-4",
-  SYSTEM_PROMPT: "You are the internal operations assistant for Deep Roots Landscape, a landscaping company. You help team members with inventory management, fleet tracking, and operational questions.\n\nCONTEXT:\n- You support field crews, managers, and office staff with real-time operational data\n- Primary focus: plant/material inventory, truck fleet status, and landscaping best practices\n- Season-aware: Understanding that spring/summer are peak planting seasons, fall for maintenance, winter for equipment prep\n\nYOUR ROLE:\n1. When asked about inventory: Focus on availability, location, and quantities. Flag low stock items. Suggest alternatives if something is unavailable.\n2. When asked about trucks/fleet: Provide status, maintenance schedules, and availability for job assignments\n3. For general landscaping questions: Give practical, experience-based advice suitable for professionals\n\nCOMMUNICATION STYLE:\n- Talk like a knowledgeable coworker, not a customer service rep\n- Be direct and action-oriented (\"Check Shed B\" not \"You may want to consider looking in Shed B\")\n- Use industry terminology (flats, plugs, B&B, hardscape, etc.)\n- Include relevant details professionals need (plant spacing, coverage rates, application rates)\n\nRESPONSE PRIORITIES:\n1. Safety warnings first (expired chemicals, equipment issues, weather concerns)\n2. Availability/status information\n3. Location and logistics\n4. Professional tips or alternatives\n5. Next steps or actions needed\n\nEXAMPLES OF GOOD RESPONSES:\n- \"We're low on Red Mulch - only 15 bags left in Shed A. Similar stock: Brown Mulch (40 bags) in Shed B.\"\n- \"Truck 2 is due for oil change this week. Truck 1 and 3 are available for tomorrow's jobs.\"\n- \"For that 2,000 sq ft area, you'll need about 6 yards of mulch at 3\" depth. We have 8 yards in stock.\"\n- \"Those Emerald Greens are 5-gallon, about 3-4' tall. Space them 3' apart for privacy hedge. We have 45 in the back row.\"\n\nWHEN YOU DON'T HAVE SPECIFIC DATA:\n- Suggest where to check physically (\"Check the overflow area behind Shed C\")\n- Recommend who to contact (\"Maria tracks the special orders\")\n- Provide general industry standards if applicable\n- Flag if something seems unusual or concerning\n\nSEASONAL AWARENESS:\n- Spring: Focus on planting stock, fertilizer availability, equipment readiness\n- Summer: Water management, heat-stressed plant care, maintenance supplies\n- Fall: Cleanup equipment, winter prep materials, late-season plantings\n- Winter: Salt/sand inventory, equipment maintenance, spring prep orders\n\nRemember: The team relies on you for quick, accurate operational support. Be helpful, practical, and always think about what helps get the job done safely and efficiently.",
+  SYSTEM_PROMPT: "You are the internal operations assistant for Deep Roots Landscape, a landscaping company. " +
+    "You help team members with inventory management, fleet tracking, and operational questions.\n\n" +
+    "CONTEXT:\n" +
+    "- You support field crews, managers, and office staff with real-time operational data\n" +
+    "- Primary focus: plant/material inventory, truck fleet status, and landscaping best practices\n" +
+    "- Season-aware: Understanding that spring/summer are peak planting seasons, fall for maintenance, winter for equipment prep\n\n" +
+    "YOUR ROLE:\n" +
+    "1. When asked about inventory: Focus on availability, location, and quantities. Flag low stock items. Suggest alternatives if something is unavailable.\n" +
+    "2. When asked about trucks/fleet: Provide status, maintenance schedules, and availability for job assignments\n" +
+    "3. For general landscaping questions: Give practical, experience-based advice suitable for professionals\n\n" +
+    "COMMUNICATION STYLE:\n" +
+    "- Talk like a knowledgeable coworker, not a customer service rep\n" +
+    "- Be direct and action-oriented (\"Check Shed B\" not \"You may want to consider looking in Shed B\")\n" +
+    "- Use industry terminology (flats, plugs, B&B, hardscape, etc.)\n" +
+    "- Include relevant details professionals need (plant spacing, coverage rates, application rates)\n\n" +
+    "RESPONSE PRIORITIES:\n" +
+    "1. Safety warnings first (expired chemicals, equipment issues, weather concerns)\n" +
+    "2. Availability/status information\n" +
+    "3. Location and logistics\n" +
+    "4. Professional tips or alternatives\n" +
+    "5. Next steps or actions needed\n\n" +
+    "EXAMPLES OF GOOD RESPONSES:\n" +
+    "- \"We're low on Red Mulch - only 15 bags left in Shed A. Similar stock: Brown Mulch (40 bags) in Shed B.\"\n" +
+    "- \"Truck 2 is due for oil change this week. Truck 1 and 3 are available for tomorrow's jobs.\"\n" +
+    "- \"For that 2,000 sq ft area, you'll need about 6 yards of mulch at 3\" depth. We have 8 yards in stock.\"\n" +
+    "- \"Those Emerald Greens are 5-gallon, about 3-4' tall. Space them 3' apart for privacy hedge. We have 45 in the back row.\"\n\n" +
+    "WHEN YOU DON'T HAVE SPECIFIC DATA:\n" +
+    "- Suggest where to check physically (\"Check the overflow area behind Shed C\")\n" +
+    "- Recommend who to contact (\"Maria tracks the special orders\")\n" +
+    "- Provide general industry standards if applicable\n" +
+    "- Flag if something seems unusual or concerning\n\n" +
+    "SEASONAL AWARENESS:\n" +
+    "- Spring: Focus on planting stock, fertilizer availability, equipment readiness\n" +
+    "- Summer: Water management, heat-stressed plant care, maintenance supplies\n" +
+    "- Fall: Cleanup equipment, winter prep materials, late-season plantings\n" +
+    "- Winter: Salt/sand inventory, equipment maintenance, spring prep orders\n\n" +
+    "Remember: The team relies on you for quick, accurate operational support. Be helpful, practical, and always think about what helps get the job done safely and efficiently.",
   CACHE_DURATION: 1200 // 20 minutes in seconds
 };
 
@@ -139,10 +175,128 @@ function addMinStockColumn() {
 // =============================
 // 🌐 Entry Point: Web App
 // =============================
-function doGet() {
-  return HtmlService.createHtmlOutputFromFile("index")
-    .setTitle("Deep Roots Inventory & Fleet Assistant")
-    .setXFrameOptionsMode(HtmlService.XFrameOptionsMode.ALLOWALL);
+function doGet(e) {
+  // This is the backend API - the dashboard is deployed separately to GitHub Pages
+  // If someone visits this URL directly, show them a helpful message
+
+  var html = '<html><head><style>' +
+    'body { font-family: Arial, sans-serif; max-width: 800px; margin: 50px auto; padding: 20px; }' +
+    'h1 { color: #4CAF50; }' +
+    'code { background: #f4f4f4; padding: 2px 6px; border-radius: 3px; }' +
+    '.status { color: #4CAF50; font-weight: bold; }' +
+    '.section { background: #f9f9f9; padding: 15px; margin: 20px 0; border-radius: 5px; }' +
+    '</style></head><body>' +
+    '<h1>🌱 Deep Roots Inventory Backend API</h1>' +
+    '<p class="status">✅ Backend is running!</p>' +
+    '<div class="section">' +
+    '<h2>📋 This is the backend API</h2>' +
+    '<p>This Google Apps Script handles inventory data, fleet tracking, and operational queries.</p>' +
+    '<p><strong>Frontend Dashboard:</strong> Deploy the dashboard files to GitHub Pages or Netlify</p>' +
+    '<p><strong>Configuration:</strong> Update <code>config.json</code> with this URL:</p>' +
+    '<code>' + ScriptApp.getService().getUrl() + '</code>' +
+    '</div>' +
+    '<div class="section">' +
+    '<h2>🧪 Test the API</h2>' +
+    '<p>Send a POST request to this URL with JSON body:</p>' +
+    '<pre>{\n  "function": "getInventoryReport",\n  "parameters": []\n}</pre>' +
+    '</div>' +
+    '<div class="section">' +
+    '<h2>📖 Available Functions</h2>' +
+    '<ul>' +
+    '<li><code>askInventory</code> - Search inventory</li>' +
+    '<li><code>getInventoryReport</code> - Get full inventory report</li>' +
+    '<li><code>getFleetReport</code> - Get truck fleet status</li>' +
+    '<li><code>checkLowStock</code> - Check items low on stock</li>' +
+    '<li><code>updateInventory</code> - Update inventory quantities</li>' +
+    '</ul>' +
+    '</div>' +
+    '</body></html>';
+
+  return HtmlService.createHtmlOutput(html)
+    .setTitle("Deep Roots Inventory Backend API");
+}
+
+// =============================
+// 🌐 API Endpoint: Handle POST requests from dashboard
+// =============================
+function doPost(e) {
+  try {
+    // Parse incoming request
+    const data = JSON.parse(e.postData.contents);
+    const functionName = data.function;
+    const params = data.parameters || [];
+
+    Logger.log("API Call: " + functionName + " with params: " + JSON.stringify(params));
+
+    // Route to the correct function
+    let result;
+    switch(functionName) {
+      case 'askInventory':
+        result = askInventory(params[0]);
+        break;
+
+      case 'updateInventory':
+        result = updateInventory(params[0]);
+        break;
+
+      case 'searchTruckInfo':
+        result = searchTruckInfo(params[0]);
+        break;
+
+      case 'searchKnowledgeBase':
+        result = searchKnowledgeBase(params[0]);
+        break;
+
+      case 'getInventoryReport':
+        result = getInventoryReport();
+        break;
+
+      case 'getFleetReport':
+        result = getFleetReport();
+        break;
+
+      case 'checkLowStock':
+        result = checkLowStock();
+        break;
+
+      case 'batchImportItems':
+        result = batchImportItems(params[0]);
+        break;
+
+      case 'findDuplicates':
+        result = findDuplicates();
+        break;
+
+      case 'mergeDuplicates':
+        result = mergeDuplicates(params[0], params[1], params[2]);
+        break;
+
+      default:
+        throw new Error('Unknown function: ' + functionName);
+    }
+
+    // Return successful response
+    return ContentService.createTextOutput(
+      JSON.stringify({
+        success: true,
+        response: result
+      })
+    ).setMimeType(ContentService.MimeType.JSON);
+
+  } catch (error) {
+    Logger.log("API Error: " + error.toString());
+
+    // Return error response
+    return ContentService.createTextOutput(
+      JSON.stringify({
+        success: false,
+        error: {
+          message: error.toString(),
+          stack: error.stack
+        }
+      })
+    ).setMimeType(ContentService.MimeType.JSON);
+  }
 }
 
 // =============================

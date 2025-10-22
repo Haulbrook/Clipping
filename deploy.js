@@ -188,87 +188,98 @@ class DeploymentManager {
 
     async deployToGoogleAppsScript() {
         console.log('🔄 Configuring for Google Apps Script...');
-        
-        // Create Apps Script manifest
-        const manifest = {
-            timeZone: "America/New_York",
-            dependencies: {},
-            webapp: {
-                access: "ANYONE",
-                executeAs: "USER_DEPLOYING"
-            },
-            runtimeVersion: "V8"
-        };
-        
-        fs.writeFileSync(
-            path.join(this.buildDir, 'appsscript.json'),
-            JSON.stringify(manifest, null, 2)
-        );
-        
-        // Create Code.gs file
-        const codeGs = `
-function doGet(e) {
-  const template = HtmlService.createTemplateFromFile('index');
-  
-  // Pass any URL parameters to the template
-  template.params = e.parameter;
-  
-  return template.evaluate()
-    .setTitle('Deep Roots Operations Dashboard')
-    .setXFrameOptionsMode(HtmlService.XFrameOptionsMode.ALLOWALL)
-    .addMetaTag('viewport', 'width=device-width, initial-scale=1');
-}
 
-function include(filename) {
-  return HtmlService.createHtmlOutputFromFile(filename).getContent();
-}
+        console.log('');
+        console.log('⚠️  IMPORTANT: This project uses SEPARATE deployments:');
+        console.log('');
+        console.log('📦 BACKEND (Google Apps Script):');
+        console.log('   - Deploy code.js to Google Apps Script as the backend API');
+        console.log('   - File: code.js contains all the inventory/fleet logic + doPost()');
+        console.log('   - Deploy as Web App with:');
+        console.log('     • Execute as: User accessing the web app');
+        console.log('     • Who has access: Anyone (or specific users)');
+        console.log('   - Copy the deployment URL');
+        console.log('');
+        console.log('🌐 FRONTEND (Static Hosting):');
+        console.log('   - Deploy index.html + js/ + styles/ to GitHub Pages/Netlify/Vercel');
+        console.log('   - Update config.json with the backend URL from step above');
+        console.log('   - The dashboard will make API calls to your backend');
+        console.log('');
+        console.log('❌ DO NOT try to deploy both together to Google Apps Script');
+        console.log('   The dashboard (index.html) needs static hosting due to:');
+        console.log('   - External CSS/JS references');
+        console.log('   - Service worker support');
+        console.log('   - Better performance and caching');
+        console.log('');
 
-// Helper functions for the dashboard
-function getDashboardConfig() {
-  try {
-    const config = include('config.json');
-    return JSON.parse(config);
-  } catch (error) {
-    console.error('Error loading config:', error);
-    return {};
-  }
-}
+        // Create a README for clarity
+        const readme = `# Google Apps Script Backend Deployment
 
-function logDashboardUsage(toolId, action) {
-  try {
-    const sheet = SpreadsheetApp.openById('YOUR_ANALYTICS_SHEET_ID');
-    const logSheet = sheet.getSheetByName('Dashboard_Usage') || sheet.insertSheet('Dashboard_Usage');
-    
-    logSheet.appendRow([
-      new Date(),
-      Session.getActiveUser().getEmail(),
-      toolId,
-      action,
-      JSON.stringify(Session.getActiveUser().getEmail())
-    ]);
-  } catch (error) {
-    console.warn('Could not log usage:', error);
-  }
+## Quick Setup
+
+1. **Open Google Apps Script**
+   - Go to https://script.google.com
+   - Create a new project named "Deep Roots Inventory Backend"
+
+2. **Copy code.js**
+   - Copy the entire contents of code.js
+   - Paste into Code.gs in Apps Script
+   - Save the project
+
+3. **Deploy as Web App**
+   - Click "Deploy" → "New deployment"
+   - Type: Web app
+   - Execute as: User accessing the web app
+   - Who has access: Anyone (or Anyone with Google account)
+   - Click "Deploy"
+   - Copy the Web app URL
+
+4. **Update Frontend Configuration**
+   - Edit config.json in your dashboard deployment
+   - Set services.inventory.url to the Web app URL from step 3
+   - Redeploy your frontend
+
+## Testing the Backend
+
+Test URL: YOUR_DEPLOYMENT_URL
+Method: POST
+Body:
+\`\`\`json
+{
+  "function": "askInventory",
+  "parameters": ["mulch"]
 }
+\`\`\`
+
+Expected response:
+\`\`\`json
+{
+  "success": true,
+  "response": { "answer": "...", "source": "..." }
+}
+\`\`\`
 `;
-        
-        fs.writeFileSync(path.join(this.buildDir, 'Code.gs'), codeGs);
-        
-        console.log('✅ Google Apps Script configuration complete');
-        console.log('📋 Next steps:');
-        console.log('   1. Create new Google Apps Script project');
-        console.log('   2. Copy all files from dist/ to the project');
-        console.log('   3. Deploy as web app');
-        console.log('   4. Update tool URLs in config.json');
+
+        fs.writeFileSync(path.join(this.buildDir, 'BACKEND_DEPLOYMENT.md'), readme);
+
+        console.log('✅ Created BACKEND_DEPLOYMENT.md with instructions');
+        console.log('📋 Use GitHub Pages or Netlify deploy for the frontend instead');
     }
 
     async deployStatic() {
         console.log('🔄 Configuring for static hosting...');
-        
+
         // Create _redirects file for SPA routing (Netlify)
+        // NOTE: The dashboard makes direct API calls to Google Apps Script
+        // No proxy is needed - just serve static files and handle SPA routing
         const redirects = `
-/*    /index.html   200
-/api/*  https://script.google.com/:splat  200
+# Serve static assets first (CSS, JS, images)
+/styles/*  /styles/:splat  200
+/js/*      /js/:splat      200
+/assets/*  /assets/:splat  200
+
+# Single Page Application routing - catch-all must be last
+/*  /index.html  200
         `;
         fs.writeFileSync(path.join(this.buildDir, '_redirects'), redirects.trim());
         

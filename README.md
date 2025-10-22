@@ -2,6 +2,21 @@
 
 A unified dashboard for Deep Roots Landscape operational tools featuring Claude-like AI interface with intelligent tool routing.
 
+## 🔧 IMPORTANT: Fixed Platform Issues
+
+This codebase has been **corrected** to properly separate backend and frontend deployments:
+
+- ✅ **Backend (code.js)** → Deploy to Google Apps Script
+- ✅ **Frontend (dashboard)** → Deploy to GitHub Pages/Netlify
+- ✅ Added missing `doPost()` function for API handling
+- ✅ Fixed API call method to work with Google Apps Script
+- ✅ Fixed Netlify redirects configuration
+- ✅ Added conditional service worker registration
+
+**📖 See [DEPLOYMENT.md](DEPLOYMENT.md) for complete deployment instructions.**
+
+---
+
 ## 🌱 Features
 
 - **Claude-like Interface**: Natural language queries with AI-powered tool routing

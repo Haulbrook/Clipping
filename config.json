@@ -16,29 +16,29 @@
       "keywords": ["inventory", "plants", "stock", "equipment", "supplies"]
     },
     "grading": {
-      "_comment": "OPTIONAL: If you have a separate grading tool, add its iframe URL here. Otherwise, leave as placeholder.",
-      "name": "Grade & Sell Decision Tool",
-      "description": "Plant quality assessment and pricing decisions",
+      "_comment": "Repair vs Replace Decision Tool - Google Apps Script Web App. TO ACTIVATE: Deploy the Apps Script as Web App and paste deployment URL here.",
+      "name": "Repair vs Replace",
+      "description": "Plant quality assessment and repair/replace decisions",
       "icon": "⭐",
-      "url": "",
+      "url": "PENDING_DEPLOYMENT",
       "color": "#FF9800",
-      "keywords": ["grade", "quality", "pricing", "assessment", "sell", "plants"]
+      "keywords": ["grade", "quality", "pricing", "assessment", "sell", "plants", "repair", "replace"]
     },
     "scheduler": {
-      "_comment": "OPTIONAL: If you have a separate scheduler tool, add its iframe URL here. Otherwise, leave as placeholder.",
+      "_comment": "Daily Scheduler - Deployed via GitHub Pages",
       "name": "Daily Scheduler",
       "description": "Crew scheduling and task management",
       "icon": "📅",
-      "url": "",
+      "url": "https://haulbrook.github.io/DeepRootsDaily/",
       "color": "#2196F3",
       "keywords": ["schedule", "crew", "tasks", "calendar", "planning"]
     },
     "tools": {
-      "_comment": "OPTIONAL: If you have a separate tools rental tool, add its iframe URL here. Otherwise, leave as placeholder.",
+      "_comment": "Hand Tool Tracker - Deployed via GitHub Pages",
       "name": "Tool Rental Checkout",
       "description": "Hand tool rental and checkout system",
       "icon": "🔧",
-      "url": "",
+      "url": "https://haulbrook.github.io/HandToolTracker/",
       "color": "#9C27B0",
       "keywords": ["tools", "rental", "checkout", "equipment", "maintenance"]
     }

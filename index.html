@@ -8,6 +8,7 @@
     <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🌱</text></svg>">
     <link rel="stylesheet" href="styles/main.css">
     <link rel="stylesheet" href="styles/components.css">
+    <!-- Enhanced v2.0 Professional Components -->
     <link rel="stylesheet" href="styles/enhanced-theme.css">
     <link rel="stylesheet" href="styles/enhanced-components.css">
     <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -52,6 +53,11 @@
                         <span class="nav-text">Dashboard</span>
                     </button>
                     <button id="newChatBtn" class="nav-item active">
+                    <button id="dashboardBtn" class="nav-item active">
+                        <span class="nav-icon">📊</span>
+                        <span class="nav-text">Dashboard</span>
+                    </button>
+                    <button id="newChatBtn" class="nav-item">
                         <span class="nav-icon">💬</span>
                         <span class="nav-text">New Query</span>
                     </button>
@@ -139,12 +145,34 @@
                     <div class="metric-card skeleton-loading">
                         <div class="skeleton skeleton-text"></div>
                         <div class="skeleton skeleton-title"></div>
+            <!-- Dashboard View -->
+            <div id="dashboardView" class="dashboard-view">
+                <!-- Metrics Grid -->
+                <div class="metrics-grid" id="metricsGrid">
+                    <!-- Metric cards will be populated dynamically by dashboard.js -->
+                </div>
+
+                <!-- Recent Activity Section -->
+                <div class="recent-activity-section">
+                    <div class="section-header">
+                        <h2>Recent Activity</h2>
+                        <p>Last 5 inventory and fleet changes</p>
+                    </div>
+                    <div class="activity-list" id="activityList">
+                        <!-- Activity items will be populated dynamically -->
+                        <div class="loading-skeleton">
+                            <div class="skeleton-item"></div>
+                            <div class="skeleton-item"></div>
+                            <div class="skeleton-item"></div>
+                            <div class="skeleton-item"></div>
+                            <div class="skeleton-item"></div>
+                        </div>
                     </div>
                 </div>
             </div>
 
             <!-- Chat Interface -->
-            <div id="chatInterface" class="chat-interface">
+            <div id="chatInterface" class="chat-interface hidden">
                 <div class="chat-container">
                     <div id="chatHistory" class="chat-history">
                         <!-- Welcome Message -->

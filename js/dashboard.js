@@ -13,6 +13,8 @@ class DashboardManager {
     async init() {
         await this.loadMetrics();
         this.renderMetricsCards();
+        await this.loadRecentActivity();
+        this.renderRecentActivity();
         this.setupAutoRefresh();
         this.setupEventListeners();
     }
@@ -75,6 +77,118 @@ class DashboardManager {
             active: activeMatch ? parseInt(activeMatch[1]) : 0,
             maintenance: maintenanceMatch ? parseInt(maintenanceMatch[1]) : 0
         };
+    }
+
+    /**
+     * Load recent activity from backend
+     */
+    async loadRecentActivity() {
+        try {
+            const api = window.app?.api;
+            if (!api) {
+                console.warn('API not available for activity loading');
+                return;
+            }
+
+            // Load recent inventory changes
+            const recentActivity = await api.callGoogleScript('inventory', 'getRecentActivity', [5]);
+
+            this.metrics.set('recentActivity', recentActivity);
+
+        } catch (error) {
+            console.error('Failed to load recent activity:', error);
+            // Set empty array as fallback
+            this.metrics.set('recentActivity', []);
+        }
+    }
+
+    /**
+     * Render recent activity list
+     */
+    renderRecentActivity() {
+        const container = document.getElementById('activityList');
+        if (!container) {
+            console.warn('Activity list container not found');
+            return;
+        }
+
+        const activities = this.metrics.get('recentActivity') || [];
+
+        if (activities.length === 0) {
+            container.innerHTML = `
+                <div class="empty-state">
+                    <div class="empty-icon">📋</div>
+                    <p>No recent activity</p>
+                    <span class="empty-hint">Changes to inventory and fleet will appear here</span>
+                </div>
+            `;
+            return;
+        }
+
+        const activityHTML = activities.map(activity => this.createActivityItem(activity)).join('');
+        container.innerHTML = activityHTML;
+    }
+
+    /**
+     * Create activity item HTML
+     */
+    createActivityItem(activity) {
+        const { action, itemName, details, timestamp, user } = activity;
+
+        // Determine icon and color based on action type
+        const actionMap = {
+            'added': { icon: '➕', color: 'success', label: 'Added' },
+            'removed': { icon: '➖', color: 'error', label: 'Removed' },
+            'edited': { icon: '✏️', color: 'info', label: 'Edited' },
+            'broken': { icon: '⚠️', color: 'warning', label: 'Marked as Broken' },
+            'out_of_service': { icon: '🔴', color: 'error', label: 'Out of Service' },
+            'maintenance': { icon: '🔧', color: 'warning', label: 'In Maintenance' },
+            'returned': { icon: '✅', color: 'success', label: 'Returned to Service' }
+        };
+
+        const actionInfo = actionMap[action] || { icon: '📝', color: 'info', label: action };
+        const timeAgo = this.formatTimeAgo(timestamp);
+
+        return `
+            <div class="activity-item ${actionInfo.color}">
+                <div class="activity-icon ${actionInfo.color}">
+                    ${actionInfo.icon}
+                </div>
+                <div class="activity-content">
+                    <div class="activity-header">
+                        <span class="activity-title">${itemName}</span>
+                        <span class="activity-badge ${actionInfo.color}">${actionInfo.label}</span>
+                    </div>
+                    <div class="activity-details">${details || 'No additional details'}</div>
+                    <div class="activity-meta">
+                        <span class="activity-time">${timeAgo}</span>
+                        ${user ? `<span class="activity-user">by ${user}</span>` : ''}
+                    </div>
+                </div>
+            </div>
+        `;
+    }
+
+    /**
+     * Format timestamp as relative time
+     */
+    formatTimeAgo(timestamp) {
+        if (!timestamp) return 'Recently';
+
+        const now = new Date();
+        const activityTime = new Date(timestamp);
+        const diffMs = now - activityTime;
+        const diffSec = Math.floor(diffMs / 1000);
+        const diffMin = Math.floor(diffSec / 60);
+        const diffHour = Math.floor(diffMin / 60);
+        const diffDay = Math.floor(diffHour / 24);
+
+        if (diffSec < 60) return 'Just now';
+        if (diffMin < 60) return `${diffMin} minute${diffMin !== 1 ? 's' : ''} ago`;
+        if (diffHour < 24) return `${diffHour} hour${diffHour !== 1 ? 's' : ''} ago`;
+        if (diffDay < 7) return `${diffDay} day${diffDay !== 1 ? 's' : ''} ago`;
+
+        return activityTime.toLocaleDateString();
     }
 
     /**
@@ -157,6 +271,8 @@ class DashboardManager {
         this.refreshInterval = setInterval(async () => {
             await this.loadMetrics();
             this.renderMetricsCards();
+            await this.loadRecentActivity();
+            this.renderRecentActivity();
         }, this.updateInterval);
     }
 

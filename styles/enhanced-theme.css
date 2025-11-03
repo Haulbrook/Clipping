@@ -17,9 +17,13 @@
 
   /* Semantic Colors */
   --success: #66BB6A;
+  --success-light: #E8F5E9;
   --warning: #FFA726;
+  --warning-light: #FFF3E0;
   --error: #EF5350;
+  --error-light: #FFEBEE;
   --info: #42A5F5;
+  --info-light: #E3F2FD;
 
   /* Neutral Colors - Enhanced Contrast */
   --gray-50: #FAFAFA;
@@ -36,7 +40,9 @@
   /* Surface Colors */
   --surface-primary: #FFFFFF;
   --surface-secondary: var(--gray-50);
+  --surface-tertiary: var(--gray-100);
   --surface-elevated: #FFFFFF;
+  --surface-hover: var(--gray-100);
   --surface-overlay: rgba(0, 0, 0, 0.6);
 
   /* Text Colors - WCAG AAA Compliant */

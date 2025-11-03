@@ -16,11 +16,11 @@
       "keywords": ["inventory", "plants", "stock", "equipment", "supplies"]
     },
     "grading": {
-      "_comment": "Repair vs Replace Decision Tool - Google Apps Script Web App. TO ACTIVATE: Deploy the Apps Script as Web App and paste deployment URL here.",
+      "_comment": "Repair vs Replace Decision Tool - Google Apps Script Web App. IMPORTANT: Ensure deployment is set to 'Who has access: Anyone' for this to work.",
       "name": "Repair vs Replace",
       "description": "Plant quality assessment and repair/replace decisions",
       "icon": "⭐",
-      "url": "PENDING_DEPLOYMENT",
+      "url": "https://script.google.com/macros/s/AKfycbxFXQqrbqcpqUyX3aVR2hKc8rGMN2KIbmloOfuFBUEgwc9hLbnkySd9NTBzGjZ1HiybJw/exec",
       "color": "#FF9800",
       "keywords": ["grade", "quality", "pricing", "assessment", "sell", "plants", "repair", "replace"]
     },

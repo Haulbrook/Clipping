@@ -1,6 +1,38 @@
-// =============================
-// 📋 Configuration
-// =============================
+/**
+ * ═══════════════════════════════════════════════════════════════════════
+ * 🌱 DEEP ROOTS LANDSCAPE - INVENTORY & FLEET MANAGEMENT SYSTEM
+ * ═══════════════════════════════════════════════════════════════════════
+ *
+ * Backend API for inventory tracking, fleet management, and operations
+ *
+ * @version 2.0.0
+ * @author Deep Roots Landscape
+ * @lastModified 2024-11-02
+ *
+ * ARCHITECTURE:
+ * - Google Apps Script backend (this file)
+ * - Static frontend dashboard (deployed to GitHub Pages)
+ * - Communication via POST requests to doPost() endpoint
+ *
+ * DEPLOYMENT:
+ * 1. Deploy this file to Google Apps Script as Web App
+ * 2. Set permissions: Execute as "User", Access "Anyone"
+ * 3. Copy deployment URL to frontend config.json
+ *
+ * API ENDPOINTS:
+ * - askInventory(query)          - Search inventory
+ * - getInventoryReport()          - Get full inventory report
+ * - getFleetReport()              - Get fleet status
+ * - updateInventory(data)         - Update inventory items
+ * - checkLowStock()               - Get low stock alerts
+ * - findDuplicates()              - Find duplicate entries
+ *
+ * ═══════════════════════════════════════════════════════════════════════
+ */
+
+// ═══════════════════════════════════════════════════════════════════════
+// 📋 CONFIGURATION
+// ═══════════════════════════════════════════════════════════════════════
 const CONFIG = {
   INVENTORY_SHEET_ID: "18qeP1XG9sDtknL3UKc7bb2utHvnJNpYNKkfMNsSVDRQ", // Replace with your actual sheet ID
   KNOWLEDGE_BASE_SHEET_ID: "1I8Wp0xfcQCHLeJyIPsQoM2moebZUy35zNGBLzDLpl8Q", // Replace with your knowledge base sheet ID
@@ -50,9 +82,187 @@ const CONFIG = {
   CACHE_DURATION: 1200 // 20 minutes in seconds
 };
 
-// =============================
-// 🔧 Setup and Diagnostic Functions
-// =============================
+// ═══════════════════════════════════════════════════════════════════════
+// 🛠️ UTILITY FUNCTIONS
+// ═══════════════════════════════════════════════════════════════════════
+
+/**
+ * Input Validation Utilities
+ */
+const Validator = {
+  /**
+   * Validate and sanitize string input
+   */
+  sanitizeString(input) {
+    if (typeof input !== 'string') return '';
+    return String(input).trim().substring(0, 1000); // Max 1000 chars
+  },
+
+  /**
+   * Validate sheet ID format
+   */
+  isValidSheetId(sheetId) {
+    return sheetId && sheetId.length > 20 && sheetId !== 'YOUR_SHEET_ID_HERE';
+  },
+
+  /**
+   * Validate numeric input
+   */
+  sanitizeNumber(input, defaultValue = 0) {
+    const num = parseInt(input);
+    return isNaN(num) ? defaultValue : num;
+  },
+
+  /**
+   * Validate inventory update data
+   */
+  validateInventoryUpdate(data) {
+    const errors = [];
+
+    if (!data.itemName || typeof data.itemName !== 'string') {
+      errors.push('Item name is required');
+    }
+    if (!data.action || !['add', 'subtract', 'update'].includes(data.action)) {
+      errors.push('Valid action is required (add, subtract, update)');
+    }
+    if (data.quantity !== undefined && isNaN(parseInt(data.quantity))) {
+      errors.push('Quantity must be a number');
+    }
+
+    return {
+      valid: errors.length === 0,
+      errors: errors
+    };
+  }
+};
+
+/**
+ * Error Handling Utilities
+ */
+const ErrorHandler = {
+  /**
+   * Create standardized error response
+   */
+  createErrorResponse(error, context = '') {
+    const errorMessage = error.toString ? error.toString() : String(error);
+    const timestamp = new Date().toISOString();
+
+    Logger.log(`[ERROR] ${timestamp} - ${context}: ${errorMessage}`);
+
+    return {
+      success: false,
+      error: {
+        message: this.sanitizeErrorMessage(errorMessage),
+        timestamp: timestamp,
+        context: context
+      }
+    };
+  },
+
+  /**
+   * Sanitize error messages to avoid exposing sensitive info
+   */
+  sanitizeErrorMessage(message) {
+    // Remove sheet IDs and sensitive data
+    return message
+      .replace(/[a-zA-Z0-9_-]{30,}/g, '[REDACTED]')
+      .replace(/Sheet ID.*$/i, 'Sheet configuration error');
+  },
+
+  /**
+   * Log detailed error for debugging
+   */
+  logError(error, context, additionalData = {}) {
+    const logEntry = {
+      timestamp: new Date().toISOString(),
+      context: context,
+      error: error.toString(),
+      stack: error.stack || 'No stack trace',
+      data: additionalData
+    };
+
+    Logger.log('ERROR DETAILS: ' + JSON.stringify(logEntry, null, 2));
+  }
+};
+
+/**
+ * Performance Monitoring
+ */
+const Performance = {
+  timers: {},
+
+  /**
+   * Start performance timer
+   */
+  start(label) {
+    this.timers[label] = Date.now();
+  },
+
+  /**
+   * End performance timer and log duration
+   */
+  end(label) {
+    if (this.timers[label]) {
+      const duration = Date.now() - this.timers[label];
+      Logger.log(`[PERFORMANCE] ${label}: ${duration}ms`);
+      delete this.timers[label];
+      return duration;
+    }
+    return 0;
+  }
+};
+
+/**
+ * Cache Management Utilities
+ */
+const CacheManager = {
+  /**
+   * Get cached value with validation
+   */
+  get(key) {
+    try {
+      const cache = CacheService.getScriptCache();
+      const value = cache.get(key);
+      return value ? JSON.parse(value) : null;
+    } catch (error) {
+      Logger.log('Cache get error: ' + error);
+      return null;
+    }
+  },
+
+  /**
+   * Set cached value with expiration
+   */
+  set(key, value, expirationSeconds = CONFIG.CACHE_DURATION) {
+    try {
+      const cache = CacheService.getScriptCache();
+      cache.put(key, JSON.stringify(value), expirationSeconds);
+      return true;
+    } catch (error) {
+      Logger.log('Cache set error: ' + error);
+      return false;
+    }
+  },
+
+  /**
+   * Clear all cache
+   */
+  clearAll() {
+    try {
+      const cache = CacheService.getScriptCache();
+      cache.removeAll([]);
+      Logger.log('Cache cleared');
+      return true;
+    } catch (error) {
+      Logger.log('Cache clear error: ' + error);
+      return false;
+    }
+  }
+};
+
+// ═══════════════════════════════════════════════════════════════════════
+// 🔧 SETUP & DIAGNOSTIC FUNCTIONS
+// ═══════════════════════════════════════════════════════════════════════
 function setupSheets() {
   // This function helps you get the correct sheet ID
   try {

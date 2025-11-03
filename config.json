@@ -16,13 +16,13 @@
       "keywords": ["inventory", "plants", "stock", "equipment", "supplies"]
     },
     "grading": {
-      "_comment": "OPTIONAL: If you have a separate grading tool, add its iframe URL here. Otherwise, leave as placeholder.",
-      "name": "Grade & Sell Decision Tool",
-      "description": "Plant quality assessment and pricing decisions",
-      "icon": "⭐",
-      "url": "",
+      "_comment": "Repair vs Replace Decision Tool - Google Sheet embedded as iframe",
+      "name": "Repair vs Replace Tool",
+      "description": "Equipment repair cost analysis and replacement decisions",
+      "icon": "🛠️",
+      "url": "https://docs.google.com/spreadsheets/d/1aF_6nHHp8NA-eETkwZMUuTlPRPOiiKEvou-F9QuVTD8/edit?rm=minimal&gid=0",
       "color": "#FF9800",
-      "keywords": ["grade", "quality", "pricing", "assessment", "sell", "plants"]
+      "keywords": ["repair", "replace", "equipment", "cost", "analysis", "decision"]
     },
     "scheduler": {
       "_comment": "OPTIONAL: If you have a separate scheduler tool, add its iframe URL here. Otherwise, leave as placeholder.",

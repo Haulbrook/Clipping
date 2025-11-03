@@ -8,6 +8,8 @@
     <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🌱</text></svg>">
     <link rel="stylesheet" href="styles/main.css">
     <link rel="stylesheet" href="styles/components.css">
+    <link rel="stylesheet" href="styles/enhanced-theme.css">
+    <link rel="stylesheet" href="styles/enhanced-components.css">
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
@@ -45,6 +47,10 @@
             <nav class="sidebar-nav">
                 <div class="nav-section">
                     <h3>Quick Actions</h3>
+                    <button id="dashboardBtn" class="nav-item">
+                        <span class="nav-icon">📊</span>
+                        <span class="nav-text">Dashboard</span>
+                    </button>
                     <button id="newChatBtn" class="nav-item active">
                         <span class="nav-icon">💬</span>
                         <span class="nav-text">New Query</span>
@@ -113,6 +119,29 @@
                     <div class="status-indicator online" id="statusIndicator"></div>
                 </div>
             </header>
+
+            <!-- Dashboard Metrics Section -->
+            <div id="dashboardMetrics" class="dashboard-metrics-section" style="padding: 1.5rem; display: none;">
+                <div class="metrics-grid" id="metricsGrid">
+                    <!-- Metrics cards will be dynamically inserted here by dashboard.js -->
+                    <div class="metric-card skeleton-loading">
+                        <div class="skeleton skeleton-text"></div>
+                        <div class="skeleton skeleton-title"></div>
+                    </div>
+                    <div class="metric-card skeleton-loading">
+                        <div class="skeleton skeleton-text"></div>
+                        <div class="skeleton skeleton-title"></div>
+                    </div>
+                    <div class="metric-card skeleton-loading">
+                        <div class="skeleton skeleton-text"></div>
+                        <div class="skeleton skeleton-title"></div>
+                    </div>
+                    <div class="metric-card skeleton-loading">
+                        <div class="skeleton skeleton-text"></div>
+                        <div class="skeleton skeleton-title"></div>
+                    </div>
+                </div>
+            </div>
 
             <!-- Chat Interface -->
             <div id="chatInterface" class="chat-interface">
@@ -248,6 +277,9 @@
         </div>
     </div>
 
+    <!-- Toast Notification Container -->
+    <div id="toastContainer" class="toast-container"></div>
+
     <!-- Scripts -->
     <script src="js/config.js"></script>
     <script src="js/utils.js"></script>
@@ -255,7 +287,61 @@
     <script src="js/ui.js"></script>
     <script src="js/chat.js"></script>
     <script src="js/tools.js"></script>
+    <script src="js/dashboard.js"></script>
     <script src="js/main.js"></script>
+
+    <!-- Dashboard Toggle Script -->
+    <script>
+        // Initialize dashboard when DOM is ready
+        document.addEventListener('DOMContentLoaded', () => {
+            const dashboardBtn = document.getElementById('dashboardBtn');
+            const newChatBtn = document.getElementById('newChatBtn');
+            const dashboardMetrics = document.getElementById('dashboardMetrics');
+            const chatInterface = document.getElementById('chatInterface');
+            const pageTitle = document.getElementById('pageTitle');
+            const pageSubtitle = document.getElementById('pageSubtitle');
+
+            if (dashboardBtn && dashboardMetrics) {
+                // Initialize dashboard manager
+                if (window.DashboardManager) {
+                    window.dashboardManager = new DashboardManager();
+                    window.dashboardManager.init().catch(err => {
+                        console.error('Dashboard initialization error:', err);
+                    });
+                }
+
+                // Toggle to dashboard view
+                dashboardBtn.addEventListener('click', () => {
+                    dashboardMetrics.style.display = 'block';
+                    chatInterface.style.display = 'none';
+                    dashboardBtn.classList.add('active');
+                    newChatBtn.classList.remove('active');
+                    pageTitle.textContent = 'Dashboard Overview';
+                    pageSubtitle.textContent = 'Real-time metrics and analytics';
+
+                    // Refresh metrics
+                    if (window.dashboardManager) {
+                        window.dashboardManager.loadMetrics();
+                    }
+                });
+
+                // Toggle to chat view
+                newChatBtn.addEventListener('click', () => {
+                    dashboardMetrics.style.display = 'none';
+                    chatInterface.style.display = 'flex';
+                    dashboardBtn.classList.remove('active');
+                    newChatBtn.classList.add('active');
+                    pageTitle.textContent = 'Operations Dashboard';
+                    pageSubtitle.textContent = 'What can I help you with today?';
+                });
+            }
+
+            // Initialize toast manager globally
+            if (window.ToastManager) {
+                window.toastManager = new ToastManager();
+            }
+        });
+    </script>
 
     <!-- Service Worker Registration -->
     <!-- Only register service worker for static hosting (not in iframes or Google Apps Script) -->

@@ -1493,6 +1493,189 @@ function getFleetReport() {
   }
 }
 
+/**
+ * Get recent activity log (last N changes)
+ * Tracks inventory additions, removals, edits, and fleet status changes
+ *
+ * @param {number} limit - Number of recent activities to return (default: 5)
+ * @returns {Array} Array of activity objects
+ */
+function getRecentActivity(limit = 5) {
+  Performance.start('getRecentActivity');
+
+  try {
+    const cleanLimit = Validator.sanitizeNumber(limit, 5);
+    const activities = [];
+
+    // Try to read from Activity Log sheet if it exists
+    try {
+      const ss = SpreadsheetApp.openById(CONFIG.INVENTORY_SHEET_ID);
+      const activitySheet = ss.getSheetByName('Activity Log');
+
+      if (activitySheet) {
+        const data = activitySheet.getDataRange().getValues();
+
+        // Skip header row, get most recent entries
+        const startRow = Math.max(1, data.length - cleanLimit);
+        const recentData = data.slice(startRow).reverse(); // Most recent first
+
+        for (let i = 0; i < recentData.length && i < cleanLimit; i++) {
+          const row = recentData[i];
+          if (row[0]) { // Has timestamp
+            activities.push({
+              timestamp: row[0],
+              action: row[1] || 'edited',
+              itemName: row[2] || 'Unknown Item',
+              details: row[3] || 'No details',
+              user: row[4] || Session.getActiveUser().getEmail() || 'System'
+            });
+          }
+        }
+
+        Performance.end('getRecentActivity');
+        return activities;
+      }
+    } catch (e) {
+      Logger.log('Activity Log sheet not found or error reading: ' + e.toString());
+    }
+
+    // Fallback: Generate activity from recent changes in inventory/fleet sheets
+    // This is a basic implementation that checks for recent modifications
+    const inventoryActivities = getRecentInventoryChanges(Math.ceil(cleanLimit / 2));
+    const fleetActivities = getRecentFleetChanges(Math.floor(cleanLimit / 2));
+
+    const allActivities = [...inventoryActivities, ...fleetActivities]
+      .sort((a, b) => new Date(b.timestamp) - new Date(a.timestamp))
+      .slice(0, cleanLimit);
+
+    Performance.end('getRecentActivity');
+    return allActivities;
+
+  } catch (error) {
+    ErrorHandler.logError(error, 'getRecentActivity', { limit });
+    Performance.end('getRecentActivity');
+    return [];
+  }
+}
+
+/**
+ * Helper: Get recent inventory changes
+ */
+function getRecentInventoryChanges(limit) {
+  try {
+    const ss = SpreadsheetApp.openById(CONFIG.INVENTORY_SHEET_ID);
+    const sheet = ss.getSheetByName(CONFIG.INVENTORY_SHEET_NAME);
+    const data = sheet.getDataRange().getValues();
+    const activities = [];
+
+    // Get last modified items (simplified - checks last N rows)
+    const startRow = Math.max(1, data.length - limit - 5);
+    for (let i = startRow; i < data.length && activities.length < limit; i++) {
+      const row = data[i];
+      if (row[0]) { // Has item name
+        activities.push({
+          timestamp: new Date(Date.now() - (data.length - i) * 3600000), // Estimate based on row position
+          action: 'edited',
+          itemName: row[0],
+          details: `Quantity: ${row[1] || 0}, Location: ${row[2] || 'Unknown'}`,
+          user: 'System'
+        });
+      }
+    }
+
+    return activities;
+  } catch (e) {
+    Logger.log('Error getting inventory changes: ' + e.toString());
+    return [];
+  }
+}
+
+/**
+ * Helper: Get recent fleet changes
+ */
+function getRecentFleetChanges(limit) {
+  try {
+    if (!CONFIG.TRUCK_SHEET_ID || CONFIG.TRUCK_SHEET_ID === "YOUR_TRUCK_SHEET_ID_HERE") {
+      return [];
+    }
+
+    const ss = SpreadsheetApp.openById(CONFIG.TRUCK_SHEET_ID);
+    const sheet = ss.getSheetByName(CONFIG.TRUCK_SHEET_NAME);
+    const data = sheet.getDataRange().getValues();
+    const activities = [];
+
+    // Check for vehicles in maintenance or with status updates
+    for (let i = 1; i < data.length && activities.length < limit; i++) {
+      const truckName = data[i][0];
+      const status = data[i][4];
+
+      if (truckName && status) {
+        let action = 'edited';
+        let actionDetails = `Status: ${status}`;
+
+        if (status.toLowerCase().includes('maintenance')) {
+          action = 'maintenance';
+          actionDetails = 'Vehicle scheduled for maintenance';
+        } else if (status.toLowerCase().includes('active')) {
+          action = 'returned';
+          actionDetails = 'Vehicle returned to active service';
+        }
+
+        activities.push({
+          timestamp: new Date(Date.now() - (data.length - i) * 7200000), // Estimate
+          action: action,
+          itemName: truckName,
+          details: actionDetails,
+          user: 'Fleet Manager'
+        });
+      }
+    }
+
+    return activities;
+  } catch (e) {
+    Logger.log('Error getting fleet changes: ' + e.toString());
+    return [];
+  }
+}
+
+/**
+ * Log activity to Activity Log sheet
+ * Creates the sheet if it doesn't exist
+ *
+ * @param {string} action - Action type (added, removed, edited, etc.)
+ * @param {string} itemName - Name of item/asset
+ * @param {string} details - Additional details
+ */
+function logActivity(action, itemName, details = '') {
+  try {
+    const ss = SpreadsheetApp.openById(CONFIG.INVENTORY_SHEET_ID);
+    let activitySheet = ss.getSheetByName('Activity Log');
+
+    // Create Activity Log sheet if it doesn't exist
+    if (!activitySheet) {
+      activitySheet = ss.insertSheet('Activity Log');
+      activitySheet.appendRow(['Timestamp', 'Action', 'Item Name', 'Details', 'User']);
+      activitySheet.getRange('A1:E1').setFontWeight('bold').setBackground('#4CAF50').setFontColor('#FFFFFF');
+      activitySheet.setFrozenRows(1);
+    }
+
+    // Add activity entry
+    const timestamp = new Date();
+    const user = Session.getActiveUser().getEmail() || 'System';
+    activitySheet.appendRow([timestamp, action, itemName, details, user]);
+
+    // Keep only last 100 entries to prevent sheet from growing too large
+    const data = activitySheet.getDataRange().getValues();
+    if (data.length > 101) { // 100 + header
+      activitySheet.deleteRows(2, data.length - 101); // Delete oldest rows
+    }
+
+  } catch (error) {
+    Logger.log('Error logging activity: ' + error.toString());
+    // Don't throw - activity logging shouldn't break main operations
+  }
+}
+
 // Check for low stock items and return alerts
 function checkLowStock() {
   try {

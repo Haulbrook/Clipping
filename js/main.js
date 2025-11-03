@@ -9,13 +9,14 @@ class DashboardApp {
         this.currentTool = null;
         this.config = null;
         this.user = null;
-        
+
         // Initialize core components
         this.ui = new UIManager();
         this.chat = new ChatManager();
         this.tools = new ToolManager();
         this.api = new APIManager();
-        
+        this.dashboard = null; // Will be initialized after config loads
+
         this.init();
     }
 
@@ -39,7 +40,14 @@ class DashboardApp {
             this.ui.init();
             this.chat.init();
             this.tools.init();
-            
+
+            // Initialize dashboard manager if DashboardManager exists
+            if (typeof DashboardManager !== 'undefined') {
+                this.dashboard = new DashboardManager();
+                await this.dashboard.init();
+                console.log('✅ Dashboard Manager initialized');
+            }
+
             // Hide loading screen and show app
             setTimeout(() => {
                 this.showLoadingScreen(false);
@@ -121,7 +129,14 @@ class DashboardApp {
     }
 
     setupEventListeners() {
-        // Sidebar navigation
+        // Sidebar navigation - Dashboard view button (if exists) or new chat
+        const dashboardBtn = document.getElementById('dashboardBtn');
+        if (dashboardBtn) {
+            dashboardBtn.addEventListener('click', () => {
+                this.showDashboardView();
+            });
+        }
+
         document.getElementById('newChatBtn')?.addEventListener('click', () => {
             this.showChatInterface();
         });
@@ -150,7 +165,7 @@ class DashboardApp {
 
         // Tool controls
         document.getElementById('toolBackBtn')?.addEventListener('click', () => {
-            this.showChatInterface();
+            this.showDashboardView();
         });
 
         document.getElementById('toolRefreshBtn')?.addEventListener('click', () => {
@@ -195,21 +210,47 @@ class DashboardApp {
         });
     }
 
-    showChatInterface() {
+    showDashboardView() {
         this.currentTool = null;
-        document.getElementById('chatInterface').classList.remove('hidden');
-        document.getElementById('toolContainer').classList.add('hidden');
-        
+        document.getElementById('dashboardView')?.classList.remove('hidden');
+        document.getElementById('chatInterface')?.classList.add('hidden');
+        document.getElementById('toolContainer')?.classList.add('hidden');
+
         // Update navigation
         document.querySelectorAll('.nav-item').forEach(item => {
             item.classList.remove('active');
         });
-        document.getElementById('newChatBtn').classList.add('active');
-        
+        document.getElementById('dashboardBtn')?.classList.add('active');
+
+        // Update header
+        document.getElementById('pageTitle').textContent = 'Operations Dashboard';
+        document.getElementById('pageSubtitle').textContent = 'Overview of inventory, fleet, and recent activity';
+
+        // Refresh dashboard if available
+        if (this.dashboard) {
+            this.dashboard.loadMetrics();
+            this.dashboard.renderMetricsCards();
+            this.dashboard.loadRecentActivity();
+            this.dashboard.renderRecentActivity();
+        }
+    }
+
+    showChatInterface() {
+        this.currentTool = null;
+        document.getElementById('dashboardView')?.classList.add('hidden');
+        document.getElementById('chatInterface')?.classList.remove('hidden');
+        document.getElementById('toolContainer')?.classList.add('hidden');
+
+        // Update navigation
+        document.querySelectorAll('.nav-item').forEach(item => {
+            item.classList.remove('active');
+        });
+        document.getElementById('newChatBtn')?.classList.add('active');
+
         // Update header
         document.getElementById('pageTitle').textContent = 'Operations Dashboard';
         document.getElementById('pageSubtitle').textContent = 'What can I help you with today?';
-        
+
         // Focus chat input
         const chatInput = document.getElementById('chatInput');
         if (chatInput) {
@@ -230,10 +271,11 @@ class DashboardApp {
         }
 
         this.currentTool = toolId;
-        
+
         // Update UI
-        document.getElementById('chatInterface').classList.add('hidden');
-        document.getElementById('toolContainer').classList.remove('hidden');
+        document.getElementById('dashboardView')?.classList.add('hidden');
+        document.getElementById('chatInterface')?.classList.add('hidden');
+        document.getElementById('toolContainer')?.classList.remove('hidden');
         
         // Update navigation
         document.querySelectorAll('.nav-item').forEach(item => {

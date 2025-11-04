@@ -16,29 +16,29 @@
       "keywords": ["inventory", "plants", "stock", "equipment", "supplies"]
     },
     "grading": {
-      "_comment": "Repair vs Replace Decision Tool - Google Apps Script Web App. IMPORTANT: Ensure deployment is set to 'Who has access: Anyone' for this to work.",
+      "_comment": "Repair vs Replace Tool - Google Apps Script web app",
       "name": "Repair vs Replace",
-      "description": "Plant quality assessment and repair/replace decisions",
-      "icon": "⭐",
-      "url": "https://script.google.com/macros/s/AKfycbxFXQqrbqcpqUyX3aVR2hKc8rGMN2KIbmloOfuFBUEgwc9hLbnkySd9NTBzGjZ1HiybJw/exec",
+      "description": "Equipment repair cost analysis and replacement decisions",
+      "icon": "🛠️",
+      "url": "https://script.google.com/macros/s/AKfycbz6-tC9CSeqrpZrIhC-4Omhw671fhJ062dxyn6m8EnglwEz4vywkB_g7zlHWVG-vDRh/exec",
       "color": "#FF9800",
-      "keywords": ["grade", "quality", "pricing", "assessment", "sell", "plants", "repair", "replace"]
+      "keywords": ["repair", "replace", "equipment", "cost", "analysis", "decision"]
     },
     "scheduler": {
-      "_comment": "Daily Scheduler - Deployed via GitHub Pages",
+      "_comment": "Crew Scheduler - Google Apps Script web app",
       "name": "Daily Scheduler",
       "description": "Crew scheduling and task management",
       "icon": "📅",
-      "url": "https://haulbrook.github.io/DeepRootsDaily/",
+      "url": "https://script.google.com/macros/s/AKfycbwV8EIR7jPTZn0bZ7Jgv3Pj-sn13q_Nz4kueZ9pppX_PGZrRbYjieUfkZWA41WLD2c/exec",
       "color": "#2196F3",
       "keywords": ["schedule", "crew", "tasks", "calendar", "planning"]
     },
     "tools": {
-      "_comment": "Hand Tool Tracker - Deployed via GitHub Pages",
-      "name": "Tool Rental Checkout",
+      "_comment": "Hand Tool Checkout - Google Apps Script web app",
+      "name": "Hand Tool Checkout",
       "description": "Hand tool rental and checkout system",
       "icon": "🔧",
-      "url": "https://haulbrook.github.io/HandToolTracker/",
+      "url": "https://script.google.com/macros/s/AKfycbxFXQqrbqcpqUyX3aVR2hKc8rGMN2KIbmloOfuFBUEgwc9hLbnkySd9NTBzGjZ1HiybJw/exec",
       "color": "#9C27B0",
       "keywords": ["tools", "rental", "checkout", "equipment", "maintenance"]
     }

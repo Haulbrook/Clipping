@@ -11,12 +11,26 @@ class DashboardManager {
     }
 
     async init() {
-        await this.loadMetrics();
+        // Render empty states immediately
         this.renderMetricsCards();
-        await this.loadRecentActivity();
         this.renderRecentActivity();
-        this.setupAutoRefresh();
+
+        // Setup listeners first so navigation always works
         this.setupEventListeners();
+        this.setupAutoRefresh();
+
+        // Load data in background (non-blocking)
+        this.loadMetrics().then(() => {
+            this.renderMetricsCards();
+        }).catch(error => {
+            console.warn('Failed to load metrics:', error);
+        });
+
+        this.loadRecentActivity().then(() => {
+            this.renderRecentActivity();
+        }).catch(error => {
+            console.warn('Failed to load recent activity:', error);
+        });
     }
 
     /**

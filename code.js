@@ -1610,13 +1610,15 @@ function getRecentFleetChanges(limit) {
       const status = data[i][4];
 
       if (truckName && status) {
+        // Convert status to string to safely call toLowerCase()
+        const statusStr = String(status).toLowerCase();
         let action = 'edited';
         let actionDetails = `Status: ${status}`;
 
-        if (status.toLowerCase().includes('maintenance')) {
+        if (statusStr.includes('maintenance')) {
           action = 'maintenance';
           actionDetails = 'Vehicle scheduled for maintenance';
-        } else if (status.toLowerCase().includes('active')) {
+        } else if (statusStr.includes('active')) {
           action = 'returned';
           actionDetails = 'Vehicle returned to active service';
         }

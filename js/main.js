@@ -149,6 +149,9 @@ class DashboardApp {
             });
         });
 
+        // Disable unconfigured tools
+        this.updateToolButtonStates();
+
         // Settings
         document.getElementById('settingsBtn')?.addEventListener('click', () => {
             this.ui.showSettingsModal();
@@ -207,6 +210,30 @@ class DashboardApp {
 
         window.addEventListener('offline', () => {
             this.ui.updateConnectionStatus(false);
+        });
+    }
+
+    updateToolButtonStates() {
+        // Check which tools are configured and disable unconfigured ones
+        if (!this.config?.services) return;
+
+        document.querySelectorAll('.tool-item').forEach(btn => {
+            const toolId = btn.dataset.tool;
+            const tool = this.config.services[toolId];
+
+            if (!tool || !tool.url || tool.url === '' || tool.url.includes('YOUR_') || tool.url.includes('_HERE')) {
+                // Tool not configured - disable button
+                btn.disabled = true;
+                btn.style.opacity = '0.5';
+                btn.style.cursor = 'not-allowed';
+                btn.title = 'Tool not configured yet';
+            } else {
+                // Tool configured - enable button
+                btn.disabled = false;
+                btn.style.opacity = '1';
+                btn.style.cursor = 'pointer';
+                btn.title = tool.description || tool.name;
+            }
         });
     }
 

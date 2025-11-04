@@ -41,11 +41,16 @@ class DashboardApp {
             this.chat.init();
             this.tools.init();
 
-            // Initialize dashboard manager if DashboardManager exists
+            // Initialize dashboard manager if DashboardManager exists (non-blocking)
             if (typeof DashboardManager !== 'undefined') {
                 this.dashboard = new DashboardManager();
-                await this.dashboard.init();
-                console.log('✅ Dashboard Manager initialized');
+                // Initialize dashboard in background - don't block app startup
+                this.dashboard.init().then(() => {
+                    console.log('✅ Dashboard Manager initialized');
+                }).catch(error => {
+                    console.warn('⚠️ Dashboard Manager failed to initialize:', error);
+                    // App still works without dashboard metrics
+                });
             }
 
             // Hide loading screen and show app

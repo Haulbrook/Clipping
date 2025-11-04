@@ -134,27 +134,44 @@ class DashboardApp {
     }
 
     setupEventListeners() {
+        console.log('🔧 Setting up event listeners...');
+
         // Sidebar navigation - Dashboard view button (if exists) or new chat
         const dashboardBtn = document.getElementById('dashboardBtn');
         if (dashboardBtn) {
             dashboardBtn.addEventListener('click', () => {
+                console.log('Dashboard button clicked');
                 this.showDashboardView();
             });
+            console.log('✅ Dashboard button listener attached');
         }
 
-        document.getElementById('newChatBtn')?.addEventListener('click', () => {
-            this.showChatInterface();
-        });
+        const newChatBtn = document.getElementById('newChatBtn');
+        if (newChatBtn) {
+            newChatBtn.addEventListener('click', () => {
+                console.log('Chat button clicked');
+                this.showChatInterface();
+            });
+            console.log('✅ Chat button listener attached');
+        }
 
         // Tool navigation
-        document.querySelectorAll('.tool-item').forEach(btn => {
+        const toolButtons = document.querySelectorAll('.tool-item');
+        console.log(`Found ${toolButtons.length} tool buttons`);
+
+        toolButtons.forEach((btn, index) => {
+            const toolId = btn.dataset.tool;
+            console.log(`  Tool button ${index}: ${toolId}`);
+
             btn.addEventListener('click', (e) => {
-                const toolId = e.currentTarget.dataset.tool;
+                console.log(`Tool button clicked: ${toolId}`);
                 this.openTool(toolId);
             });
         });
 
-        // Disable unconfigured tools
+        console.log('✅ All tool listeners attached');
+
+        // Disable unconfigured tools (but event listeners are already attached)
         this.updateToolButtonStates();
 
         // Settings
@@ -219,25 +236,34 @@ class DashboardApp {
     }
 
     updateToolButtonStates() {
-        // Check which tools are configured and disable unconfigured ones
-        if (!this.config?.services) return;
+        // Check which tools are configured and style them accordingly
+        if (!this.config?.services) {
+            console.warn('Config not loaded yet, skipping tool state update');
+            return;
+        }
+
+        console.log('🔍 Updating tool button states...');
 
         document.querySelectorAll('.tool-item').forEach(btn => {
             const toolId = btn.dataset.tool;
             const tool = this.config.services[toolId];
 
-            if (!tool || !tool.url || tool.url === '' || tool.url.includes('YOUR_') || tool.url.includes('_HERE')) {
-                // Tool not configured - disable button
-                btn.disabled = true;
+            const isConfigured = tool && tool.url && tool.url !== '' && !tool.url.includes('YOUR_') && !tool.url.includes('_HERE');
+
+            if (!isConfigured) {
+                // Tool not configured - style as disabled but DON'T use btn.disabled
+                btn.classList.add('tool-disabled');
                 btn.style.opacity = '0.5';
                 btn.style.cursor = 'not-allowed';
                 btn.title = 'Tool not configured yet';
+                console.log(`  ❌ ${toolId}: Not configured`);
             } else {
-                // Tool configured - enable button
-                btn.disabled = false;
+                // Tool configured - enable fully
+                btn.classList.remove('tool-disabled');
                 btn.style.opacity = '1';
                 btn.style.cursor = 'pointer';
                 btn.title = tool.description || tool.name;
+                console.log(`  ✅ ${toolId}: ${tool.url.substring(0, 50)}...`);
             }
         });
     }
@@ -268,6 +294,7 @@ class DashboardApp {
     }
 
     showChatInterface() {
+        console.log('💬 Showing chat interface');
         this.currentTool = null;
         document.getElementById('dashboardView')?.classList.add('hidden');
         document.getElementById('chatInterface')?.classList.remove('hidden');
@@ -288,19 +315,25 @@ class DashboardApp {
         if (chatInput) {
             setTimeout(() => chatInput.focus(), 100);
         }
+        console.log('✅ Chat interface shown');
     }
 
     async openTool(toolId) {
+        console.log(`🔧 Opening tool: ${toolId}`);
+
         const tool = this.config.services[toolId];
         if (!tool) {
             console.error('❌ Tool not found:', toolId);
             return;
         }
 
-        if (!tool.url || tool.url.includes('YOUR_') || tool.url.includes('_HERE')) {
-            this.ui.showMessage('Tool not configured. Please set the URL in settings.', 'error');
+        if (!tool.url || tool.url === '' || tool.url.includes('YOUR_') || tool.url.includes('_HERE')) {
+            console.error(`❌ Tool ${toolId} not configured`);
+            alert('Tool not configured. Please set the URL in settings.');
             return;
         }
+
+        console.log(`✅ Tool ${toolId} configured, loading: ${tool.url.substring(0, 50)}...`);
 
         this.currentTool = toolId;
 

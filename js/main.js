@@ -29,13 +29,17 @@ class DashboardApp {
             
             // Load configuration
             await this.loadConfiguration();
-            
+
+            // Initialize API manager with loaded config
+            this.api.init();
+            console.log('✅ API Manager initialized with endpoints:', this.api.endpoints);
+
             // Initialize user session
             await this.initializeUser();
-            
+
             // Setup event listeners
             this.setupEventListeners();
-            
+
             // Initialize UI components
             this.ui.init();
             this.chat.init();

@@ -31,6 +31,12 @@ class DashboardManager {
         }).catch(error => {
             console.warn('Failed to load recent activity:', error);
         });
+
+        this.loadRecentTransactions().then(() => {
+            this.renderRecentTransactions();
+        }).catch(error => {
+            console.warn('Failed to load recent transactions:', error);
+        });
     }
 
     /**
@@ -206,6 +212,101 @@ class DashboardManager {
     }
 
     /**
+     * Load recent transactions (sales, moves, updates)
+     */
+    async loadRecentTransactions() {
+        try {
+            const api = window.app?.api;
+            if (!api) {
+                console.warn('API not available for transactions loading');
+                return;
+            }
+
+            // Load recent transactions from log
+            const recentTransactions = await api.callGoogleScript('inventory', 'getRecentTransactions', [10]);
+
+            this.metrics.set('recentTransactions', recentTransactions);
+
+        } catch (error) {
+            console.error('Failed to load recent transactions:', error);
+            // Set empty array as fallback
+            this.metrics.set('recentTransactions', []);
+        }
+    }
+
+    /**
+     * Render recent transactions list
+     */
+    renderRecentTransactions() {
+        const container = document.getElementById('transactionsList');
+        if (!container) {
+            console.warn('Transactions list container not found');
+            return;
+        }
+
+        const transactions = this.metrics.get('recentTransactions') || [];
+
+        if (transactions.length === 0) {
+            container.innerHTML = `
+                <div class="empty-state">
+                    <div class="empty-icon">💰</div>
+                    <p>No recent transactions</p>
+                    <span class="empty-hint">Sales, moves, and updates will appear here</span>
+                </div>
+            `;
+            return;
+        }
+
+        const transactionsHTML = transactions.map(transaction => this.createTransactionItem(transaction)).join('');
+        container.innerHTML = transactionsHTML;
+    }
+
+    /**
+     * Create transaction item HTML
+     */
+    createTransactionItem(transaction) {
+        const { action, item, quantity, unit, newTotal, notes, timestamp, user } = transaction;
+
+        // Determine icon and color based on transaction type
+        const transactionMap = {
+            'ADD': { icon: '📦', color: 'success', label: 'Received' },
+            'NEW': { icon: '✨', color: 'info', label: 'New Item' },
+            'SUBTRACT': { icon: '📤', color: 'warning', label: 'Dispatched' },
+            'SOLD': { icon: '💰', color: 'success', label: 'Sold' },
+            'MOVED': { icon: '🚚', color: 'info', label: 'Moved' },
+            'UPDATE': { icon: '✏️', color: 'info', label: 'Updated' },
+            'DAMAGED': { icon: '⚠️', color: 'error', label: 'Damaged' },
+            'MAINTENANCE': { icon: '🔧', color: 'warning', label: 'Maintenance' }
+        };
+
+        const transactionInfo = transactionMap[action] || { icon: '📋', color: 'info', label: action };
+        const timeAgo = this.formatTimeAgo(timestamp);
+
+        return `
+            <div class="transaction-item ${transactionInfo.color}">
+                <div class="transaction-icon ${transactionInfo.color}">
+                    ${transactionInfo.icon}
+                </div>
+                <div class="transaction-content">
+                    <div class="transaction-header">
+                        <span class="transaction-title">${item}</span>
+                        <span class="transaction-badge ${transactionInfo.color}">${transactionInfo.label}</span>
+                    </div>
+                    <div class="transaction-quantity">
+                        ${quantity ? `${quantity > 0 ? '+' : ''}${quantity} ${unit || 'units'}` : ''}
+                        ${newTotal !== undefined ? `• Stock: ${newTotal} ${unit || 'units'}` : ''}
+                    </div>
+                    <div class="transaction-details">${notes || ''}</div>
+                    <div class="transaction-meta">
+                        <span class="transaction-time">${timeAgo}</span>
+                        ${user ? `<span class="transaction-user">by ${user}</span>` : ''}
+                    </div>
+                </div>
+            </div>
+        `;
+    }
+
+    /**
      * Render metrics cards on dashboard
      */
     renderMetricsCards() {
@@ -287,6 +388,8 @@ class DashboardManager {
             this.renderMetricsCards();
             await this.loadRecentActivity();
             this.renderRecentActivity();
+            await this.loadRecentTransactions();
+            this.renderRecentTransactions();
         }, this.updateInterval);
     }
 
@@ -301,6 +404,10 @@ class DashboardManager {
                 refreshBtn.disabled = true;
                 await this.loadMetrics();
                 this.renderMetricsCards();
+                await this.loadRecentActivity();
+                this.renderRecentActivity();
+                await this.loadRecentTransactions();
+                this.renderRecentTransactions();
                 this.showToast('Dashboard refreshed', 'success');
                 setTimeout(() => refreshBtn.disabled = false, 2000);
             });

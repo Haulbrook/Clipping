@@ -820,6 +820,188 @@
 }
 
 /* ============================================
+   TRANSACTIONS SECTION
+   ============================================ */
+.recent-transactions-section {
+  margin-top: var(--space-8);
+}
+
+.transactions-list {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3);
+}
+
+.transaction-item {
+  display: flex;
+  align-items: flex-start;
+  gap: var(--space-4);
+  padding: var(--space-4);
+  background: var(--surface-secondary);
+  border-radius: var(--radius-md);
+  border-left: 4px solid var(--border-color);
+  transition: all var(--transition-base);
+}
+
+.transaction-item:hover {
+  background: var(--surface-hover);
+  transform: translateX(4px);
+  box-shadow: var(--shadow-sm);
+}
+
+.transaction-item.success {
+  border-left-color: var(--success);
+}
+
+.transaction-item.warning {
+  border-left-color: var(--warning);
+}
+
+.transaction-item.error {
+  border-left-color: var(--error);
+}
+
+.transaction-item.info {
+  border-left-color: var(--info);
+}
+
+.transaction-icon {
+  flex-shrink: 0;
+  width: 40px;
+  height: 40px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: var(--radius-md);
+  font-size: var(--font-size-lg);
+  background: var(--surface-tertiary);
+  border: 2px solid var(--border-color);
+}
+
+.transaction-icon.success {
+  background: var(--success-light);
+  border-color: var(--success);
+  color: var(--success);
+}
+
+.transaction-icon.warning {
+  background: var(--warning-light);
+  border-color: var(--warning);
+  color: var(--warning);
+}
+
+.transaction-icon.error {
+  background: var(--error-light);
+  border-color: var(--error);
+  color: var(--error);
+}
+
+.transaction-icon.info {
+  background: var(--info-light);
+  border-color: var(--info);
+  color: var(--info);
+}
+
+.transaction-content {
+  flex: 1;
+  min-width: 0;
+}
+
+.transaction-header {
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+  flex-wrap: wrap;
+  margin-bottom: var(--space-2);
+}
+
+.transaction-title {
+  font-weight: var(--font-weight-semibold);
+  color: var(--text-primary);
+  font-size: var(--font-size-base);
+}
+
+.transaction-badge {
+  display: inline-flex;
+  align-items: center;
+  padding: var(--space-1) var(--space-3);
+  border-radius: var(--radius-full);
+  font-size: var(--font-size-xs);
+  font-weight: var(--font-weight-medium);
+  background: var(--surface-tertiary);
+  color: var(--text-secondary);
+  border: 1px solid var(--border-color);
+}
+
+.transaction-badge.success {
+  background: var(--success-light);
+  color: var(--success);
+  border-color: var(--success);
+}
+
+.transaction-badge.warning {
+  background: var(--warning-light);
+  color: var(--warning);
+  border-color: var(--warning);
+}
+
+.transaction-badge.error {
+  background: var(--error-light);
+  color: var(--error);
+  border-color: var(--error);
+}
+
+.transaction-badge.info {
+  background: var(--info-light);
+  color: var(--info);
+  border-color: var(--info);
+}
+
+.transaction-quantity {
+  font-size: var(--font-size-sm);
+  color: var(--text-primary);
+  font-weight: var(--font-weight-medium);
+  margin-bottom: var(--space-2);
+}
+
+.transaction-details {
+  font-size: var(--font-size-sm);
+  color: var(--text-secondary);
+  margin-bottom: var(--space-2);
+  line-height: 1.5;
+}
+
+.transaction-meta {
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+  font-size: var(--font-size-xs);
+  color: var(--text-tertiary);
+}
+
+.transaction-time {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-1);
+}
+
+.transaction-time::before {
+  content: '🕒';
+  font-size: 0.9em;
+}
+
+.transaction-user {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-1);
+}
+
+.transaction-user::before {
+  content: '👤';
+  font-size: 0.9em;
+}
+
+/* ============================================
    EMPTY STATE
    ============================================ */
 .empty-state {

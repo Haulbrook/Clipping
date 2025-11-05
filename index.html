@@ -48,18 +48,13 @@
             <nav class="sidebar-nav">
                 <div class="nav-section">
                     <h3>Quick Actions</h3>
-                    <button id="dashboardBtn" class="nav-item">
-                        <span class="nav-icon">📊</span>
-                        <span class="nav-text">Dashboard</span>
-                    </button>
-                    <button id="newChatBtn" class="nav-item active">
                     <button id="dashboardBtn" class="nav-item active">
                         <span class="nav-icon">📊</span>
                         <span class="nav-text">Dashboard</span>
                     </button>
-                    <button id="newChatBtn" class="nav-item">
+                    <button id="chatBtn" class="nav-item">
                         <span class="nav-icon">💬</span>
-                        <span class="nav-text">New Query</span>
+                        <span class="nav-text">Chat</span>
                     </button>
                 </div>
 
@@ -142,6 +137,29 @@
                     <div class="activity-list" id="activityList">
                         <!-- Activity items will be populated dynamically -->
                         <div class="loading-skeleton">
+                            <div class="skeleton-item"></div>
+                            <div class="skeleton-item"></div>
+                            <div class="skeleton-item"></div>
+                            <div class="skeleton-item"></div>
+                            <div class="skeleton-item"></div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Recent Transactions Section -->
+                <div class="recent-transactions-section">
+                    <div class="section-header">
+                        <h2>Recent Transactions</h2>
+                        <p>Last 10 items sold, moved, or updated</p>
+                    </div>
+                    <div class="transactions-list" id="transactionsList">
+                        <!-- Transaction items will be populated dynamically -->
+                        <div class="loading-skeleton">
+                            <div class="skeleton-item"></div>
+                            <div class="skeleton-item"></div>
+                            <div class="skeleton-item"></div>
+                            <div class="skeleton-item"></div>
+                            <div class="skeleton-item"></div>
                             <div class="skeleton-item"></div>
                             <div class="skeleton-item"></div>
                             <div class="skeleton-item"></div>

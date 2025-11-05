@@ -385,6 +385,19 @@ function addMinStockColumn() {
 // =============================
 // 🌐 Entry Point: Web App
 // =============================
+// =============================
+// 🌐 CORS Support - Handle preflight requests
+// =============================
+function doOptions(e) {
+  // Handle CORS preflight requests
+  return ContentService.createTextOutput('')
+    .setMimeType(ContentService.MimeType.TEXT)
+    .setHeader('Access-Control-Allow-Origin', '*')
+    .setHeader('Access-Control-Allow-Methods', 'GET, POST, OPTIONS')
+    .setHeader('Access-Control-Allow-Headers', 'Content-Type, X-Dashboard-Version')
+    .setHeader('Access-Control-Max-Age', '86400'); // 24 hours
+}
+
 function doGet(e) {
   // This is the backend API - the dashboard is deployed separately to GitHub Pages
   // If someone visits this URL directly, show them a helpful message
@@ -481,22 +494,47 @@ function doPost(e) {
         result = mergeDuplicates(params[0], params[1], params[2]);
         break;
 
+      // Dashboard functions
+      case 'getRecentActivity':
+        result = getRecentActivity(params[0] || 5);
+        break;
+
+      case 'getRecentInventoryChanges':
+        result = getRecentInventoryChanges(params[0] || 5);
+        break;
+
+      case 'getRecentFleetChanges':
+        result = getRecentFleetChanges(params[0] || 5);
+        break;
+
+      case 'logActivity':
+        result = logActivity(params[0], params[1], params[2] || '');
+        break;
+
+      case 'getRecentTransactions':
+        result = getRecentTransactions(params[0] || 10);
+        break;
+
       default:
         throw new Error('Unknown function: ' + functionName);
     }
 
-    // Return successful response
+    // Return successful response with CORS headers
     return ContentService.createTextOutput(
       JSON.stringify({
         success: true,
         response: result
       })
-    ).setMimeType(ContentService.MimeType.JSON);
+    )
+    .setMimeType(ContentService.MimeType.JSON)
+    .setHeader('Access-Control-Allow-Origin', '*')
+    .setHeader('Access-Control-Allow-Methods', 'GET, POST, OPTIONS')
+    .setHeader('Access-Control-Allow-Headers', 'Content-Type, X-Dashboard-Version');
 
   } catch (error) {
     Logger.log("API Error: " + error.toString());
 
-    // Return error response
+    // Return error response with CORS headers
     return ContentService.createTextOutput(
       JSON.stringify({
         success: false,
@@ -505,7 +543,11 @@ function doPost(e) {
           stack: error.stack
         }
       })
-    ).setMimeType(ContentService.MimeType.JSON);
+    )
+    .setMimeType(ContentService.MimeType.JSON)
+    .setHeader('Access-Control-Allow-Origin', '*')
+    .setHeader('Access-Control-Allow-Methods', 'GET, POST, OPTIONS')
+    .setHeader('Access-Control-Allow-Headers', 'Content-Type, X-Dashboard-Version');
   }
 }
 
@@ -576,18 +618,24 @@ function askInventory(query) {
 // =============================
 function searchInventory(query) {
   try {
+    // Validate query parameter
+    if (!query || typeof query !== 'string') {
+      Logger.log("Error in searchInventory: query is undefined, null, or not a string");
+      return null;
+    }
+
     const cache = CacheService.getScriptCache();
     const cacheKey = "inventory_" + query.toLowerCase();
     const cached = cache.get(cacheKey);
-    
+
     if (cached) {
       return cached;
     }
-    
+
     const ss = SpreadsheetApp.openById(CONFIG.INVENTORY_SHEET_ID);
     const sheet = ss.getSheetByName(CONFIG.INVENTORY_SHEET_NAME);
     const data = sheet.getDataRange().getValues();
-    
+
     if (data.length < 2) return null; // No data beyond headers
     
     // Parse quantity request from query
@@ -830,25 +878,31 @@ function normalizePlural(text) {
 // =============================
 function searchTruckInfo(query) {
   try {
+    // Validate query parameter
+    if (!query || typeof query !== 'string') {
+      Logger.log("Error in searchTruckInfo: query is undefined, null, or not a string");
+      return null;
+    }
+
     // Check if truck sheet is configured
     if (!CONFIG.TRUCK_SHEET_ID || CONFIG.TRUCK_SHEET_ID === "YOUR_TRUCK_SHEET_ID_HERE") {
       return null;
     }
-    
+
     const cache = CacheService.getScriptCache();
     const cacheKey = "truck_" + query.toLowerCase();
     const cached = cache.get(cacheKey);
-    
+
     if (cached) {
       return cached;
     }
-    
+
     const ss = SpreadsheetApp.openById(CONFIG.TRUCK_SHEET_ID);
     const sheet = ss.getSheetByName(CONFIG.TRUCK_SHEET_NAME);
     const data = sheet.getDataRange().getValues();
-    
+
     if (data.length < 2) return null;
-    
+
     const queryLower = query.toLowerCase().trim();
     const queryWords = queryLower.split(/\s+/);
     const results = [];
@@ -1074,12 +1128,23 @@ function askOpenAI(query) {
 // =============================
 function updateInventory(updateData) {
   try {
+    // Validate updateData parameter
+    if (!updateData || typeof updateData !== 'object') {
+      Logger.log("Error in updateInventory: updateData is undefined, null, or not an object");
+      return { success: false, message: "Invalid update data provided." };
+    }
+
+    if (!updateData.action) {
+      Logger.log("Error in updateInventory: action is missing");
+      return { success: false, message: "No action specified." };
+    }
+
     const ss = SpreadsheetApp.openById(CONFIG.INVENTORY_SHEET_ID);
     const sheet = ss.getSheetByName(CONFIG.INVENTORY_SHEET_NAME);
-    
+
     // Clear cache since we're updating
     CacheService.getScriptCache().removeAll([]);
-    
+
     switch (updateData.action) {
       case 'add':
         return addInventory(sheet, updateData);
@@ -1088,7 +1153,7 @@ function updateInventory(updateData) {
       case 'update':
         return updateItemInfo(sheet, updateData);
       default:
-        return { success: false, message: "Invalid action specified." };
+        return { success: false, message: "Invalid action specified: " + updateData.action };
     }
   } catch (error) {
     Logger.log("Error in updateInventory: " + error.toString());
@@ -1098,6 +1163,20 @@ function updateInventory(updateData) {
 
 // Add new inventory items or increase existing quantity
 function addInventory(sheet, data) {
+  // Validate data parameter exists FIRST
+  if (!data || typeof data !== 'object') {
+    Logger.log("Error in addInventory: data parameter is undefined, null, or not an object");
+    return { success: false, message: "Invalid data parameter. Required: { itemName, quantity, unit, location, notes }" };
+  }
+
+  // Then validate required fields
+  if (!data.itemName || typeof data.itemName !== 'string') {
+    return { success: false, message: "itemName is required and must be a string." };
+  }
+  if (data.quantity === undefined || typeof data.quantity !== 'number') {
+    return { success: false, message: "quantity is required and must be a number." };
+  }
+
   const allData = sheet.getDataRange().getValues();
   const itemNameLower = data.itemName.toLowerCase();
   
@@ -1171,6 +1250,20 @@ function addInventory(sheet, data) {
 
 // Subtract inventory (sold or died)
 function subtractInventory(sheet, data) {
+  // Validate data parameter exists FIRST
+  if (!data || typeof data !== 'object') {
+    Logger.log("Error in subtractInventory: data parameter is undefined, null, or not an object");
+    return { success: false, message: "Invalid data parameter. Required: { itemName, quantity, unit }" };
+  }
+
+  // Then validate required fields
+  if (!data.itemName || typeof data.itemName !== 'string') {
+    return { success: false, message: "itemName is required and must be a string." };
+  }
+  if (data.quantity === undefined || typeof data.quantity !== 'number') {
+    return { success: false, message: "quantity is required and must be a number." };
+  }
+
   const allData = sheet.getDataRange().getValues();
   const itemNameLower = data.itemName.toLowerCase();
   
@@ -1610,13 +1703,15 @@ function getRecentFleetChanges(limit) {
       const status = data[i][4];
 
       if (truckName && status) {
+        // Convert status to string to safely call toLowerCase()
+        const statusStr = String(status).toLowerCase();
         let action = 'edited';
         let actionDetails = `Status: ${status}`;
 
-        if (status.toLowerCase().includes('maintenance')) {
+        if (statusStr.includes('maintenance')) {
           action = 'maintenance';
           actionDetails = 'Vehicle scheduled for maintenance';
-        } else if (status.toLowerCase().includes('active')) {
+        } else if (statusStr.includes('active')) {
           action = 'returned';
           actionDetails = 'Vehicle returned to active service';
         }
@@ -1634,6 +1729,63 @@ function getRecentFleetChanges(limit) {
     return activities;
   } catch (e) {
     Logger.log('Error getting fleet changes: ' + e.toString());
+    return [];
+  }
+}
+
+/**
+ * Get recent transactions from Transaction Log
+ * Returns the last N transactions (sales, moves, updates, etc.)
+ *
+ * @param {number} limit - Number of transactions to return (default: 10)
+ * @returns {Array} Array of transaction objects
+ */
+function getRecentTransactions(limit = 10) {
+  Performance.start('getRecentTransactions');
+
+  try {
+    const cleanLimit = Validator.sanitizeNumber(limit, 10);
+
+    const ss = SpreadsheetApp.openById(CONFIG.INVENTORY_SHEET_ID);
+    let logSheet = ss.getSheetByName('Transaction Log');
+
+    // Return empty array if no transaction log exists yet
+    if (!logSheet) {
+      Logger.log('No Transaction Log sheet found');
+      return [];
+    }
+
+    const data = logSheet.getDataRange().getValues();
+
+    // If only headers or empty, return empty array
+    if (data.length <= 1) {
+      return [];
+    }
+
+    // Get the last N rows (excluding header)
+    const startRow = Math.max(1, data.length - cleanLimit);
+    const recentData = data.slice(startRow).reverse(); // Most recent first
+
+    // Transform to transaction objects
+    const transactions = recentData.map(row => ({
+      timestamp: row[0],
+      action: row[1] || 'UPDATE',
+      item: row[2] || 'Unknown Item',
+      quantity: row[3] || 0,
+      unit: row[4] || 'units',
+      newTotal: row[5],
+      notes: row[6] || '',
+      user: Session.getActiveUser().getEmail() || 'System'
+    }));
+
+    Logger.log(`Retrieved ${transactions.length} recent transactions`);
+    Performance.end('getRecentTransactions');
+
+    return transactions;
+
+  } catch (error) {
+    ErrorHandler.logError(error, 'getRecentTransactions', { limit });
+    Performance.end('getRecentTransactions');
     return [];
   }
 }
@@ -1798,6 +1950,84 @@ function testTruckAccess() {
     
   } catch (error) {
     Logger.log("❌ ERROR: " + error.toString());
+    return false;
+  }
+}
+
+// Test search inventory function
+function testSearchInventory() {
+  try {
+    Logger.log("========== TESTING SEARCH INVENTORY ==========");
+    const result = searchInventory("plants");
+    if (result) {
+      Logger.log("✅ Search successful!");
+      Logger.log("Result: " + result.substring(0, 200) + "...");
+      return true;
+    } else {
+      Logger.log("❌ Search returned null");
+      return false;
+    }
+  } catch (error) {
+    Logger.log("❌ Error in searchInventory: " + error.toString());
+    return false;
+  }
+}
+
+// Test add item function
+function testAddItem() {
+  try {
+    Logger.log("========== TESTING ADD ITEM ==========");
+    const testData = {
+      action: 'add',
+      itemName: 'Test Plant',
+      quantity: 10,
+      unit: 'units',
+      location: 'Test Area',
+      notes: 'Test item'
+    };
+    const result = updateInventory(testData);
+    Logger.log("Result: " + JSON.stringify(result));
+    return result.success;
+  } catch (error) {
+    Logger.log("❌ Error in testAddItem: " + error.toString());
+    return false;
+  }
+}
+
+// Test subtract item function
+function testSubtractItem() {
+  try {
+    Logger.log("========== TESTING SUBTRACT ITEM ==========");
+    const testData = {
+      action: 'subtract',
+      itemName: 'Test Plant',
+      quantity: 5,
+      unit: 'units'
+    };
+    const result = updateInventory(testData);
+    Logger.log("Result: " + JSON.stringify(result));
+    return result.success;
+  } catch (error) {
+    Logger.log("❌ Error in testSubtractItem: " + error.toString());
+    return false;
+  }
+}
+
+// Test update item function
+function testUpdateItem() {
+  try {
+    Logger.log("========== TESTING UPDATE ITEM ==========");
+    const testData = {
+      action: 'update',
+      itemName: 'Test Plant',
+      location: 'Updated Location',
+      notes: 'Updated notes'
+    };
+    const result = updateInventory(testData);
+    Logger.log("Result: " + JSON.stringify(result));
+    return result.success;
+  } catch (error) {
+    Logger.log("❌ Error in testUpdateItem: " + error.toString());
     return false;
   }
 }

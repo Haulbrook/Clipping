@@ -614,18 +614,24 @@ function askInventory(query) {
 // =============================
 function searchInventory(query) {
   try {
+    // Validate query parameter
+    if (!query || typeof query !== 'string') {
+      Logger.log("Error in searchInventory: query is undefined, null, or not a string");
+      return null;
+    }
+
     const cache = CacheService.getScriptCache();
     const cacheKey = "inventory_" + query.toLowerCase();
     const cached = cache.get(cacheKey);
-    
+
     if (cached) {
       return cached;
     }
-    
+
     const ss = SpreadsheetApp.openById(CONFIG.INVENTORY_SHEET_ID);
     const sheet = ss.getSheetByName(CONFIG.INVENTORY_SHEET_NAME);
     const data = sheet.getDataRange().getValues();
-    
+
     if (data.length < 2) return null; // No data beyond headers
     
     // Parse quantity request from query
@@ -1112,12 +1118,23 @@ function askOpenAI(query) {
 // =============================
 function updateInventory(updateData) {
   try {
+    // Validate updateData parameter
+    if (!updateData || typeof updateData !== 'object') {
+      Logger.log("Error in updateInventory: updateData is undefined, null, or not an object");
+      return { success: false, message: "Invalid update data provided." };
+    }
+
+    if (!updateData.action) {
+      Logger.log("Error in updateInventory: action is missing");
+      return { success: false, message: "No action specified." };
+    }
+
     const ss = SpreadsheetApp.openById(CONFIG.INVENTORY_SHEET_ID);
     const sheet = ss.getSheetByName(CONFIG.INVENTORY_SHEET_NAME);
-    
+
     // Clear cache since we're updating
     CacheService.getScriptCache().removeAll([]);
-    
+
     switch (updateData.action) {
       case 'add':
         return addInventory(sheet, updateData);
@@ -1126,7 +1143,7 @@ function updateInventory(updateData) {
       case 'update':
         return updateItemInfo(sheet, updateData);
       default:
-        return { success: false, message: "Invalid action specified." };
+        return { success: false, message: "Invalid action specified: " + updateData.action };
     }
   } catch (error) {
     Logger.log("Error in updateInventory: " + error.toString());
@@ -1136,6 +1153,14 @@ function updateInventory(updateData) {
 
 // Add new inventory items or increase existing quantity
 function addInventory(sheet, data) {
+  // Validate required fields
+  if (!data.itemName || typeof data.itemName !== 'string') {
+    return { success: false, message: "itemName is required and must be a string." };
+  }
+  if (data.quantity === undefined || typeof data.quantity !== 'number') {
+    return { success: false, message: "quantity is required and must be a number." };
+  }
+
   const allData = sheet.getDataRange().getValues();
   const itemNameLower = data.itemName.toLowerCase();
   
@@ -1209,6 +1234,14 @@ function addInventory(sheet, data) {
 
 // Subtract inventory (sold or died)
 function subtractInventory(sheet, data) {
+  // Validate required fields
+  if (!data.itemName || typeof data.itemName !== 'string') {
+    return { success: false, message: "itemName is required and must be a string." };
+  }
+  if (data.quantity === undefined || typeof data.quantity !== 'number') {
+    return { success: false, message: "quantity is required and must be a number." };
+  }
+
   const allData = sheet.getDataRange().getValues();
   const itemNameLower = data.itemName.toLowerCase();
   
@@ -1838,6 +1871,84 @@ function testTruckAccess() {
     
   } catch (error) {
     Logger.log("❌ ERROR: " + error.toString());
+    return false;
+  }
+}
+
+// Test search inventory function
+function testSearchInventory() {
+  try {
+    Logger.log("========== TESTING SEARCH INVENTORY ==========");
+    const result = searchInventory("plants");
+    if (result) {
+      Logger.log("✅ Search successful!");
+      Logger.log("Result: " + result.substring(0, 200) + "...");
+      return true;
+    } else {
+      Logger.log("❌ Search returned null");
+      return false;
+    }
+  } catch (error) {
+    Logger.log("❌ Error in searchInventory: " + error.toString());
+    return false;
+  }
+}
+
+// Test add item function
+function testAddItem() {
+  try {
+    Logger.log("========== TESTING ADD ITEM ==========");
+    const testData = {
+      action: 'add',
+      itemName: 'Test Plant',
+      quantity: 10,
+      unit: 'units',
+      location: 'Test Area',
+      notes: 'Test item'
+    };
+    const result = updateInventory(testData);
+    Logger.log("Result: " + JSON.stringify(result));
+    return result.success;
+  } catch (error) {
+    Logger.log("❌ Error in testAddItem: " + error.toString());
+    return false;
+  }
+}
+
+// Test subtract item function
+function testSubtractItem() {
+  try {
+    Logger.log("========== TESTING SUBTRACT ITEM ==========");
+    const testData = {
+      action: 'subtract',
+      itemName: 'Test Plant',
+      quantity: 5,
+      unit: 'units'
+    };
+    const result = updateInventory(testData);
+    Logger.log("Result: " + JSON.stringify(result));
+    return result.success;
+  } catch (error) {
+    Logger.log("❌ Error in testSubtractItem: " + error.toString());
+    return false;
+  }
+}
+
+// Test update item function
+function testUpdateItem() {
+  try {
+    Logger.log("========== TESTING UPDATE ITEM ==========");
+    const testData = {
+      action: 'update',
+      itemName: 'Test Plant',
+      location: 'Updated Location',
+      notes: 'Updated notes'
+    };
+    const result = updateInventory(testData);
+    Logger.log("Result: " + JSON.stringify(result));
+    return result.success;
+  } catch (error) {
+    Logger.log("❌ Error in testUpdateItem: " + error.toString());
     return false;
   }
 }

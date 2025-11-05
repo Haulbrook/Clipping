@@ -385,6 +385,19 @@ function addMinStockColumn() {
 // =============================
 // 🌐 Entry Point: Web App
 // =============================
+// =============================
+// 🌐 CORS Support - Handle preflight requests
+// =============================
+function doOptions(e) {
+  // Handle CORS preflight requests
+  return ContentService.createTextOutput('')
+    .setMimeType(ContentService.MimeType.TEXT)
+    .setHeader('Access-Control-Allow-Origin', '*')
+    .setHeader('Access-Control-Allow-Methods', 'GET, POST, OPTIONS')
+    .setHeader('Access-Control-Allow-Headers', 'Content-Type, X-Dashboard-Version')
+    .setHeader('Access-Control-Max-Age', '86400'); // 24 hours
+}
+
 function doGet(e) {
   // This is the backend API - the dashboard is deployed separately to GitHub Pages
   // If someone visits this URL directly, show them a helpful message
@@ -481,22 +494,43 @@ function doPost(e) {
         result = mergeDuplicates(params[0], params[1], params[2]);
         break;
 
+      // Dashboard functions
+      case 'getRecentActivity':
+        result = getRecentActivity(params[0] || 5);
+        break;
+
+      case 'getRecentInventoryChanges':
+        result = getRecentInventoryChanges(params[0] || 5);
+        break;
+
+      case 'getRecentFleetChanges':
+        result = getRecentFleetChanges(params[0] || 5);
+        break;
+
+      case 'logActivity':
+        result = logActivity(params[0], params[1], params[2] || '');
+        break;
+
       default:
         throw new Error('Unknown function: ' + functionName);
     }
 
-    // Return successful response
+    // Return successful response with CORS headers
     return ContentService.createTextOutput(
       JSON.stringify({
         success: true,
         response: result
       })
-    ).setMimeType(ContentService.MimeType.JSON);
+    )
+    .setMimeType(ContentService.MimeType.JSON)
+    .setHeader('Access-Control-Allow-Origin', '*')
+    .setHeader('Access-Control-Allow-Methods', 'GET, POST, OPTIONS')
+    .setHeader('Access-Control-Allow-Headers', 'Content-Type, X-Dashboard-Version');
 
   } catch (error) {
     Logger.log("API Error: " + error.toString());
 
-    // Return error response
+    // Return error response with CORS headers
     return ContentService.createTextOutput(
       JSON.stringify({
         success: false,
@@ -505,7 +539,11 @@ function doPost(e) {
           stack: error.stack
         }
       })
-    ).setMimeType(ContentService.MimeType.JSON);
+    )
+    .setMimeType(ContentService.MimeType.JSON)
+    .setHeader('Access-Control-Allow-Origin', '*')
+    .setHeader('Access-Control-Allow-Methods', 'GET, POST, OPTIONS')
+    .setHeader('Access-Control-Allow-Headers', 'Content-Type, X-Dashboard-Version');
   }
 }
 

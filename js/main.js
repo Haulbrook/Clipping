@@ -150,9 +150,9 @@ class DashboardApp {
             console.log('✅ Dashboard button listener attached');
         }
 
-        const newChatBtn = document.getElementById('newChatBtn');
-        if (newChatBtn) {
-            newChatBtn.addEventListener('click', () => {
+        const chatBtn = document.getElementById('chatBtn');
+        if (chatBtn) {
+            chatBtn.addEventListener('click', () => {
                 console.log('Chat button clicked');
                 this.showChatInterface();
             });

@@ -874,25 +874,31 @@ function normalizePlural(text) {
 // =============================
 function searchTruckInfo(query) {
   try {
+    // Validate query parameter
+    if (!query || typeof query !== 'string') {
+      Logger.log("Error in searchTruckInfo: query is undefined, null, or not a string");
+      return null;
+    }
+
     // Check if truck sheet is configured
     if (!CONFIG.TRUCK_SHEET_ID || CONFIG.TRUCK_SHEET_ID === "YOUR_TRUCK_SHEET_ID_HERE") {
       return null;
     }
-    
+
     const cache = CacheService.getScriptCache();
     const cacheKey = "truck_" + query.toLowerCase();
     const cached = cache.get(cacheKey);
-    
+
     if (cached) {
       return cached;
     }
-    
+
     const ss = SpreadsheetApp.openById(CONFIG.TRUCK_SHEET_ID);
     const sheet = ss.getSheetByName(CONFIG.TRUCK_SHEET_NAME);
     const data = sheet.getDataRange().getValues();
-    
+
     if (data.length < 2) return null;
-    
+
     const queryLower = query.toLowerCase().trim();
     const queryWords = queryLower.split(/\s+/);
     const results = [];
@@ -1153,7 +1159,13 @@ function updateInventory(updateData) {
 
 // Add new inventory items or increase existing quantity
 function addInventory(sheet, data) {
-  // Validate required fields
+  // Validate data parameter exists FIRST
+  if (!data || typeof data !== 'object') {
+    Logger.log("Error in addInventory: data parameter is undefined, null, or not an object");
+    return { success: false, message: "Invalid data parameter. Required: { itemName, quantity, unit, location, notes }" };
+  }
+
+  // Then validate required fields
   if (!data.itemName || typeof data.itemName !== 'string') {
     return { success: false, message: "itemName is required and must be a string." };
   }
@@ -1234,7 +1246,13 @@ function addInventory(sheet, data) {
 
 // Subtract inventory (sold or died)
 function subtractInventory(sheet, data) {
-  // Validate required fields
+  // Validate data parameter exists FIRST
+  if (!data || typeof data !== 'object') {
+    Logger.log("Error in subtractInventory: data parameter is undefined, null, or not an object");
+    return { success: false, message: "Invalid data parameter. Required: { itemName, quantity, unit }" };
+  }
+
+  // Then validate required fields
   if (!data.itemName || typeof data.itemName !== 'string') {
     return { success: false, message: "itemName is required and must be a string." };
   }

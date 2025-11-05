@@ -511,6 +511,10 @@ function doPost(e) {
         result = logActivity(params[0], params[1], params[2] || '');
         break;
 
+      case 'getRecentTransactions':
+        result = getRecentTransactions(params[0] || 10);
+        break;
+
       default:
         throw new Error('Unknown function: ' + functionName);
     }
@@ -1725,6 +1729,63 @@ function getRecentFleetChanges(limit) {
     return activities;
   } catch (e) {
     Logger.log('Error getting fleet changes: ' + e.toString());
+    return [];
+  }
+}
+
+/**
+ * Get recent transactions from Transaction Log
+ * Returns the last N transactions (sales, moves, updates, etc.)
+ *
+ * @param {number} limit - Number of transactions to return (default: 10)
+ * @returns {Array} Array of transaction objects
+ */
+function getRecentTransactions(limit = 10) {
+  Performance.start('getRecentTransactions');
+
+  try {
+    const cleanLimit = Validator.sanitizeNumber(limit, 10);
+
+    const ss = SpreadsheetApp.openById(CONFIG.INVENTORY_SHEET_ID);
+    let logSheet = ss.getSheetByName('Transaction Log');
+
+    // Return empty array if no transaction log exists yet
+    if (!logSheet) {
+      Logger.log('No Transaction Log sheet found');
+      return [];
+    }
+
+    const data = logSheet.getDataRange().getValues();
+
+    // If only headers or empty, return empty array
+    if (data.length <= 1) {
+      return [];
+    }
+
+    // Get the last N rows (excluding header)
+    const startRow = Math.max(1, data.length - cleanLimit);
+    const recentData = data.slice(startRow).reverse(); // Most recent first
+
+    // Transform to transaction objects
+    const transactions = recentData.map(row => ({
+      timestamp: row[0],
+      action: row[1] || 'UPDATE',
+      item: row[2] || 'Unknown Item',
+      quantity: row[3] || 0,
+      unit: row[4] || 'units',
+      newTotal: row[5],
+      notes: row[6] || '',
+      user: Session.getActiveUser().getEmail() || 'System'
+    }));
+
+    Logger.log(`Retrieved ${transactions.length} recent transactions`);
+    Performance.end('getRecentTransactions');
+
+    return transactions;
+
+  } catch (error) {
+    ErrorHandler.logError(error, 'getRecentTransactions', { limit });
+    Performance.end('getRecentTransactions');
     return [];
   }
 }

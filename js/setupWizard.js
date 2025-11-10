@@ -143,6 +143,19 @@ class SetupWizard {
     }
 
     /**
+     * Force start the wizard (ignoring completion status)
+     */
+    async forceStart() {
+        console.log('Force starting setup wizard...');
+
+        return new Promise((resolve) => {
+            this.resolve = resolve;
+            this.createWizardUI();
+            this.showStep(0);
+        });
+    }
+
+    /**
      * Create wizard UI
      */
     createWizardUI() {

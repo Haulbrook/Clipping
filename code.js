@@ -427,6 +427,18 @@ function doGet(e) {
 }
 
 // =============================
+// 🌐 Handle CORS Preflight (OPTIONS requests)
+// =============================
+function doOptions(e) {
+  return ContentService.createTextOutput('')
+    .setMimeType(ContentService.MimeType.TEXT)
+    .setHeader('Access-Control-Allow-Origin', '*')
+    .setHeader('Access-Control-Allow-Methods', 'GET, POST, OPTIONS')
+    .setHeader('Access-Control-Allow-Headers', 'Content-Type')
+    .setHeader('Access-Control-Max-Age', '86400');
+}
+
+// =============================
 // 🌐 API Endpoint: Handle POST requests from dashboard
 // =============================
 function doPost(e) {
@@ -481,22 +493,31 @@ function doPost(e) {
         result = mergeDuplicates(params[0], params[1], params[2]);
         break;
 
+      case 'getRecentActivity':
+        // Return recent activity (last 5 changes)
+        result = getRecentActivity(params[0] || 5);
+        break;
+
       default:
         throw new Error('Unknown function: ' + functionName);
     }
 
-    // Return successful response
+    // Return successful response with CORS headers
     return ContentService.createTextOutput(
       JSON.stringify({
         success: true,
         response: result
       })
-    ).setMimeType(ContentService.MimeType.JSON);
+    )
+    .setMimeType(ContentService.MimeType.JSON)
+    .setHeader('Access-Control-Allow-Origin', '*')
+    .setHeader('Access-Control-Allow-Methods', 'GET, POST, OPTIONS')
+    .setHeader('Access-Control-Allow-Headers', 'Content-Type');
 
   } catch (error) {
     Logger.log("API Error: " + error.toString());
 
-    // Return error response
+    // Return error response with CORS headers
     return ContentService.createTextOutput(
       JSON.stringify({
         success: false,
@@ -505,8 +526,29 @@ function doPost(e) {
           stack: error.stack
         }
       })
-    ).setMimeType(ContentService.MimeType.JSON);
+    )
+    .setMimeType(ContentService.MimeType.JSON)
+    .setHeader('Access-Control-Allow-Origin', '*')
+    .setHeader('Access-Control-Allow-Methods', 'GET, POST, OPTIONS')
+    .setHeader('Access-Control-Allow-Headers', 'Content-Type');
   }
+}
+
+// =============================
+// 📊 Get Recent Activity (for dashboard)
+// =============================
+function getRecentActivity(limit = 5) {
+  // This is a placeholder - implement based on your needs
+  // Could track last modified items, recent searches, etc.
+  return [
+    {
+      type: 'inventory_update',
+      item: 'Red Mulch',
+      action: 'Stock updated',
+      timestamp: new Date().toISOString(),
+      user: 'System'
+    }
+  ];
 }
 
 // =============================

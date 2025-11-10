@@ -17,22 +17,42 @@ class DashboardApp {
         this.api = new APIManager();
         this.dashboard = null; // Will be initialized after config loads
 
+        // Initialize setup wizard (if available)
+        this.setupWizard = window.SetupWizard ? new SetupWizard() : null;
+
+        // Skills (will be initialized after configuration)
+        this.deconstructionSkill = null;
+        this.forwardThinkerSkill = null;
+
         this.init();
     }
 
     async init() {
         try {
             console.log('🚀 Initializing Dashboard App...');
-            
+
             // Show loading screen
             this.showLoadingScreen(true);
-            
+
             // Load configuration
             await this.loadConfiguration();
 
             // Initialize API manager with loaded config
             this.api.init();
             console.log('✅ API Manager initialized with endpoints:', this.api.endpoints);
+
+            // Run setup wizard if needed
+            if (this.setupWizard) {
+                const wizardConfig = await this.setupWizard.start();
+                if (wizardConfig) {
+                    // Merge wizard config with app config
+                    this.config = { ...this.config, ...wizardConfig };
+                    console.log('✅ Setup wizard completed', wizardConfig);
+                }
+            }
+
+            // Initialize skills with configuration
+            await this.initializeSkills();
 
             // Initialize user session
             await this.initializeUser();
@@ -44,6 +64,12 @@ class DashboardApp {
             this.ui.init();
             this.chat.init();
             this.tools.init();
+
+            // Initialize skills in chat manager
+            if (this.chat && this.chat.initializeSkills) {
+                this.chat.initializeSkills(this.config);
+                console.log('✅ Chat skills initialized');
+            }
 
             // Initialize dashboard manager if DashboardManager exists (non-blocking)
             if (typeof DashboardManager !== 'undefined') {
@@ -57,16 +83,135 @@ class DashboardApp {
                 });
             }
 
+            // Start proactive suggestions (if forward thinker is enabled)
+            this.startProactiveSuggestions();
+
             // Hide loading screen and show app
             setTimeout(() => {
                 this.showLoadingScreen(false);
                 this.isInitialized = true;
                 console.log('✅ Dashboard App initialized successfully');
+                this.showWelcomeMessage();
             }, 1500);
-            
+
         } catch (error) {
             console.error('❌ Failed to initialize Dashboard App:', error);
             this.handleInitializationError(error);
+        }
+    }
+
+    /**
+     * Initialize AI skills (Deconstruction & Forward Thinker)
+     */
+    async initializeSkills() {
+        try {
+            // Check if skills are enabled in config
+            const enableDeconstruction = this.config.enableDeconstructionSkill !== false;
+            const enableForwardThinker = this.config.enableForwardThinkerSkill !== false;
+
+            if (enableDeconstruction && window.DeconstructionRebuildSkill) {
+                this.deconstructionSkill = new DeconstructionRebuildSkill(this.config);
+                console.log('✅ Deconstruction & Rebuild Skill initialized');
+            }
+
+            if (enableForwardThinker && window.ForwardThinkerSkill) {
+                this.forwardThinkerSkill = new ForwardThinkerSkill(this.config);
+                console.log('✅ Forward Thinker Skill initialized');
+            }
+        } catch (error) {
+            console.warn('⚠️ Skills initialization failed:', error);
+        }
+    }
+
+    /**
+     * Start proactive suggestions system
+     */
+    startProactiveSuggestions() {
+        if (!this.forwardThinkerSkill || !this.config.enableForwardThinkerSkill) {
+            return;
+        }
+
+        // Generate proactive suggestions every 5 minutes
+        setInterval(() => {
+            const currentState = {
+                lowInventory: false, // Would check real inventory status
+                upcomingDeadlines: false // Would check real deadlines
+            };
+
+            const suggestions = this.forwardThinkerSkill.generateProactiveSuggestions(currentState);
+
+            if (suggestions.success && suggestions.suggestions.length > 0) {
+                this.showProactiveSuggestions(suggestions.suggestions);
+            }
+        }, 5 * 60 * 1000); // 5 minutes
+    }
+
+    /**
+     * Show proactive suggestions to user
+     */
+    showProactiveSuggestions(suggestions) {
+        // Check if suggestions panel already exists
+        let panel = document.getElementById('proactive-suggestions-panel');
+
+        if (!panel) {
+            panel = document.createElement('div');
+            panel.id = 'proactive-suggestions-panel';
+            panel.className = 'proactive-suggestions';
+            document.body.appendChild(panel);
+        }
+
+        // Build suggestions HTML
+        let html = `
+            <div class="suggestions-header">
+                <div class="suggestions-title">💡 Suggestions</div>
+                <button class="suggestions-close" onclick="this.closest('.proactive-suggestions').remove()">×</button>
+            </div>
+        `;
+
+        suggestions.slice(0, 3).forEach(suggestion => {
+            html += `
+                <div class="suggestion-item ${suggestion.priority}-priority" onclick="window.app.handleSuggestionClick('${suggestion.type}')">
+                    <div class="suggestion-title">${suggestion.title}</div>
+                    <div class="suggestion-description">${suggestion.description}</div>
+                </div>
+            `;
+        });
+
+        panel.innerHTML = html;
+
+        // Auto-hide after 15 seconds
+        setTimeout(() => {
+            if (panel && panel.parentNode) {
+                panel.remove();
+            }
+        }, 15000);
+    }
+
+    /**
+     * Handle suggestion click
+     */
+    handleSuggestionClick(type) {
+        console.log('Suggestion clicked:', type);
+        // Route to appropriate tool or action based on suggestion type
+    }
+
+    /**
+     * Show welcome message with skills info
+     */
+    showWelcomeMessage() {
+        if (!this.chat) return;
+
+        const skillsEnabled = [];
+        if (this.deconstructionSkill) skillsEnabled.push('🧩 Complex Query Analysis');
+        if (this.forwardThinkerSkill) skillsEnabled.push('🔮 Predictive Suggestions');
+
+        if (skillsEnabled.length > 0) {
+            const message = `Welcome! I'm powered by advanced AI skills:\n\n${skillsEnabled.join('\n')}\n\nI can help break down complex queries and predict what you might need next!`;
+            setTimeout(() => {
+                if (this.chat.addMessage) {
+                    this.chat.addMessage(message, 'assistant');
+                }
+            }, 2000);
         }
     }
 

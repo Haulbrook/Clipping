@@ -7,7 +7,7 @@ class ChatManager {
         this.messageHistory = [];
         this.isTyping = false;
         this.currentConversationId = null;
-        
+
         // AI routing keywords for each tool
         this.toolKeywords = {
             inventory: ['inventory', 'stock', 'plants', 'supplies', 'materials', 'clippings', 'search', 'find', 'boxwood', 'mulch', 'fertilizer'],
@@ -15,6 +15,25 @@ class ChatManager {
             scheduler: ['schedule', 'calendar', 'crew', 'task', 'appointment', 'plan', 'assign', 'daily', 'tomorrow'],
             tools: ['tools', 'rental', 'checkout', 'equipment', 'borrow', 'return', 'maintenance']
         };
+
+        // Skills (will be initialized by main.js)
+        this.deconstructionSkill = null;
+        this.forwardThinkerSkill = null;
+    }
+
+    /**
+     * Initialize skills (called from main.js)
+     */
+    initializeSkills(config = {}) {
+        if (window.DeconstructionRebuildSkill) {
+            this.deconstructionSkill = new DeconstructionRebuildSkill(config);
+            console.log('Deconstruction & Rebuild Skill initialized');
+        }
+
+        if (window.ForwardThinkerSkill) {
+            this.forwardThinkerSkill = new ForwardThinkerSkill(config);
+            console.log('Forward Thinker Skill initialized');
+        }
     }
 
     init() {
@@ -115,14 +134,134 @@ class ChatManager {
     }
 
     async processMessage(message) {
-        // Determine which tool this message is most relevant to
-        const toolRoute = this.determineToolRoute(message);
-        
-        if (toolRoute.toolId === 'general') {
-            return this.generateGeneralResponse(message);
-        } else {
-            return this.generateToolSpecificResponse(message, toolRoute);
+        let response = { content: '', type: 'general' };
+
+        // Step 1: Check if query is complex and apply Deconstruction & Rebuild skill
+        if (this.deconstructionSkill) {
+            const complexityAnalysis = this.deconstructionSkill.isComplexQuery(message);
+
+            if (complexityAnalysis.isComplex) {
+                const deconstructed = this.deconstructionSkill.process(message);
+
+                if (deconstructed.success) {
+                    // Generate formatted response showing the breakdown
+                    const breakdownResponse = this.formatDeconstructionResponse(deconstructed);
+                    response.content = breakdownResponse;
+                    response.type = 'deconstruction';
+                    response.deconstructionData = deconstructed;
+
+                    return response;
+                }
+            }
         }
+
+        // Step 2: Determine which tool this message is most relevant to
+        const toolRoute = this.determineToolRoute(message);
+
+        // Step 3: Apply Forward Thinker skill to predict next steps
+        let forwardThinking = null;
+        if (this.forwardThinkerSkill) {
+            const actionType = this.forwardThinkerSkill.classifyAction(message);
+            const context = {
+                toolId: toolRoute.toolId,
+                confidence: toolRoute.confidence,
+                currentTime: new Date().toISOString(),
+                hasResults: false,
+                requiresNotification: message.toLowerCase().includes('notify') || message.toLowerCase().includes('alert')
+            };
+
+            forwardThinking = this.forwardThinkerSkill.predictNextSteps(message, context);
+        }
+
+        // Step 4: Generate response based on routing
+        if (toolRoute.toolId === 'general') {
+            response = this.generateGeneralResponse(message);
+        } else {
+            response = this.generateToolSpecificResponse(message, toolRoute);
+        }
+
+        // Step 5: Append forward thinking suggestions if available
+        if (forwardThinking && forwardThinking.success) {
+            response.content += this.formatForwardThinkingResponse(forwardThinking.predictions);
+            response.forwardThinking = forwardThinking.predictions;
+        }
+
+        return response;
+    }
+
+    /**
+     * Format deconstruction response for display
+     */
+    formatDeconstructionResponse(deconstructed) {
+        let response = `**🧩 Complex Query Detected**\n\n`;
+        response += `I've broken down your query into ${deconstructed.plan.totalSteps} actionable steps:\n\n`;
+
+        deconstructed.plan.steps.forEach((step, idx) => {
+            response += `**${idx + 1}. ${step.description}**\n`;
+
+            if (step.requiredResources.length > 0) {
+                response += `   📦 Resources: ${step.requiredResources.map(r => r.name).join(', ')}\n`;
+            }
+
+            if (step.dependencies.length > 0) {
+                response += `   ⚠️ Depends on: Step ${step.dependencies.map(d => d.replace('component_', '')).join(', ')}\n`;
+            }
+
+            response += '\n';
+        });
+
+        response += `\n**⏱️ ${deconstructed.plan.summary.duration}**\n`;
+
+        if (deconstructed.plan.parallelizable.length > 0) {
+            response += `**⚡ ${deconstructed.plan.summary.parallelization}**\n`;
+        }
+
+        response += `\nWould you like me to proceed with executing these steps?`;
+
+        return response;
+    }
+
+    /**
+     * Format forward thinking response for display
+     */
+    formatForwardThinkingResponse(predictions) {
+        let response = '\n\n**🔮 Next Steps Prediction**\n\n';
+
+        // Show top 3 predicted next steps
+        const topSteps = predictions.nextSteps.slice(0, 3);
+        response += `*You might want to:*\n`;
+        topSteps.forEach(step => {
+            response += `• ${step.charAt(0).toUpperCase() + step.slice(1)} the results\n`;
+        });
+
+        // Show consequences if any
+        if (predictions.consequences && predictions.consequences.length > 0) {
+            const highPriorityConsequences = predictions.consequences.filter(c => c.severity === 'high');
+
+            if (highPriorityConsequences.length > 0) {
+                response += `\n**⚠️ Important Considerations:**\n`;
+                highPriorityConsequences.forEach(consequence => {
+                    response += `• ${consequence.consequences.join(', ')}\n`;
+                    if (consequence.mitigations.length > 0) {
+                        response += `  *Recommendation:* ${consequence.mitigations[0]}\n`;
+                    }
+                });
+            }
+        }
+
+        // Show optimizations if any
+        if (predictions.optimizations && predictions.optimizations.length > 0) {
+            const highImpactOptimizations = predictions.optimizations.filter(opt => opt.impact === 'high');
+
+            if (highImpactOptimizations.length > 0) {
+                response += `\n**💡 Optimization Suggestions:**\n`;
+                highImpactOptimizations.forEach(opt => {
+                    response += `• ${opt.suggestion}\n`;
+                });
+            }
+        }
+
+        return response;
     }
 
     determineToolRoute(message) {

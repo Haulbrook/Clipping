@@ -1,8 +1,9 @@
 {
   "name": "deep-roots-dashboard",
-  "version": "1.0.0",
-  "description": "Integrated dashboard for Deep Roots Landscape operations tools",
+  "version": "2.0.0",
+  "description": "Refactored operations dashboard with dependency injection, event-driven architecture, and modern best practices",
   "main": "index.html",
+  "type": "module",
   "scripts": {
     "start": "python -m http.server 8080",
     "deploy": "node deploy.js",

@@ -251,17 +251,32 @@ class UIManager {
             const gradingUrl = document.getElementById('gradingUrl');
             const schedulerUrl = document.getElementById('schedulerUrl');
             const toolsUrl = document.getElementById('toolsUrl');
-            
+
             if (inventoryUrl) inventoryUrl.value = config.inventory?.url || '';
             if (gradingUrl) gradingUrl.value = config.grading?.url || '';
             if (schedulerUrl) schedulerUrl.value = config.scheduler?.url || '';
             if (toolsUrl) toolsUrl.value = config.tools?.url || '';
         }
-        
+
         // Load theme preference
         const darkMode = document.getElementById('darkMode');
         if (darkMode) {
             darkMode.checked = this.currentTheme === 'dark';
+        }
+
+        // Load AI skills preferences
+        const appConfig = window.app?.config;
+        if (appConfig) {
+            const enableDeconstruction = document.getElementById('enableDeconstructionSkill');
+            const enableForwardThinker = document.getElementById('enableForwardThinkerSkill');
+
+            if (enableDeconstruction) {
+                enableDeconstruction.checked = appConfig.enableDeconstructionSkill !== false;
+            }
+
+            if (enableForwardThinker) {
+                enableForwardThinker.checked = appConfig.enableForwardThinkerSkill !== false;
+            }
         }
     }
 

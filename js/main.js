@@ -359,6 +359,36 @@ class DashboardApp {
             this.ui.hideSettingsModal();
         });
 
+        // Setup Wizard button
+        document.getElementById('runSetupWizard')?.addEventListener('click', async () => {
+            console.log('🧙‍♂️ Running setup wizard...');
+            if (this.setupWizard) {
+                // Hide settings modal first
+                this.ui.hideSettingsModal();
+
+                // Force run the wizard (even if already completed)
+                const wizardConfig = await this.setupWizard.forceStart();
+                if (wizardConfig) {
+                    // Merge wizard config with app config
+                    this.config = { ...this.config, ...wizardConfig };
+
+                    // Reinitialize skills with new config
+                    await this.initializeSkills();
+
+                    // Reinitialize skills in chat manager
+                    if (this.chat && this.chat.initializeSkills) {
+                        this.chat.initializeSkills(this.config);
+                    }
+
+                    // Update UI
+                    this.ui.showNotification('Configuration updated successfully!', 'success');
+                    console.log('✅ Setup wizard completed and skills reinitialized');
+                }
+            } else {
+                this.ui.showNotification('Setup wizard not available', 'error');
+            }
+        });
+
         // Quick actions
         document.querySelectorAll('.quick-action').forEach(btn => {
             btn.addEventListener('click', (e) => {
@@ -569,7 +599,7 @@ class DashboardApp {
         }
     }
 
-    saveSettings() {
+    async saveSettings() {
         const settings = {
             services: {
                 inventory: { url: document.getElementById('inventoryUrl').value },
@@ -577,7 +607,9 @@ class DashboardApp {
                 scheduler: { url: document.getElementById('schedulerUrl').value },
                 tools: { url: document.getElementById('toolsUrl').value }
             },
-            darkMode: document.getElementById('darkMode').checked
+            darkMode: document.getElementById('darkMode').checked,
+            enableDeconstructionSkill: document.getElementById('enableDeconstructionSkill')?.checked ?? true,
+            enableForwardThinkerSkill: document.getElementById('enableForwardThinkerSkill')?.checked ?? true
         };
 
         // Save to localStorage
@@ -596,6 +628,16 @@ class DashboardApp {
 
         // Update config
         Object.assign(this.config.services, settings.services);
+        this.config.enableDeconstructionSkill = settings.enableDeconstructionSkill;
+        this.config.enableForwardThinkerSkill = settings.enableForwardThinkerSkill;
+
+        // Reinitialize skills with new settings
+        await this.initializeSkills();
+
+        // Reinitialize skills in chat manager
+        if (this.chat && this.chat.initializeSkills) {
+            this.chat.initializeSkills(this.config);
+        }
 
         this.ui.hideSettingsModal();
         this.ui.showMessage('Settings saved successfully!', 'success');

@@ -44,6 +44,13 @@ class DashboardManager {
                 return;
             }
 
+            // Check if any endpoints are configured
+            if (!this.hasConfiguredEndpoints()) {
+                console.log('No endpoints configured - skipping metrics load');
+                this.showSetupRequired();
+                return;
+            }
+
             // Load inventory metrics
             const inventory = await api.callGoogleScript('inventory', 'getInventoryReport', []);
             const lowStock = await api.callGoogleScript('inventory', 'checkLowStock', []);
@@ -54,8 +61,14 @@ class DashboardManager {
             this.metrics.set('fleet', this.parseFleetMetrics(fleetReport));
 
         } catch (error) {
-            console.error('Failed to load metrics:', error);
-            this.showError('Unable to load dashboard metrics');
+            // Only show error if it's not about missing endpoints
+            if (!error.message.includes('No Google Apps Script endpoint')) {
+                console.error('Failed to load metrics:', error);
+                this.showError('Unable to load dashboard metrics');
+            } else {
+                console.log('Endpoints not configured yet');
+                this.showSetupRequired();
+            }
         }
     }
 
@@ -104,13 +117,23 @@ class DashboardManager {
                 return;
             }
 
+            // Check if any endpoints are configured
+            if (!this.hasConfiguredEndpoints()) {
+                console.log('No endpoints configured - skipping activity load');
+                this.metrics.set('recentActivity', []);
+                return;
+            }
+
             // Load recent inventory changes
             const recentActivity = await api.callGoogleScript('inventory', 'getRecentActivity', [5]);
 
             this.metrics.set('recentActivity', recentActivity);
 
         } catch (error) {
-            console.error('Failed to load recent activity:', error);
+            // Only show error if it's not about missing endpoints
+            if (!error.message.includes('No Google Apps Script endpoint')) {
+                console.error('Failed to load recent activity:', error);
+            }
             // Set empty array as fallback
             this.metrics.set('recentActivity', []);
         }
@@ -488,6 +511,49 @@ class ChartHelper {
             currentAngle += angle;
             return segment;
         });
+    }
+
+    /**
+     * Check if any endpoints are configured
+     */
+    hasConfiguredEndpoints() {
+        const config = window.app?.config?.services;
+        if (!config) return false;
+
+        // Check if at least one service has a URL configured
+        const services = ['inventory', 'grading', 'scheduler', 'tools'];
+        return services.some(service => {
+            const url = config[service]?.url;
+            return url && url.trim() !== '';
+        });
+    }
+
+    /**
+     * Show setup required message
+     */
+    showSetupRequired() {
+        const metricsGrid = document.querySelector('.metrics-grid');
+        if (metricsGrid) {
+            metricsGrid.innerHTML = `
+                <div class="setup-required" style="grid-column: 1 / -1; text-align: center; padding: 60px 20px; background: var(--bg-secondary, #f8f9fa); border-radius: 12px; margin: 20px 0;">
+                    <div style="font-size: 64px; margin-bottom: 20px;">🧙‍♂️</div>
+                    <h2 style="margin: 0 0 12px; color: var(--text-primary, #333);">Setup Required</h2>
+                    <p style="color: var(--text-secondary, #666); margin-bottom: 24px; max-width: 500px; margin-left: auto; margin-right: auto;">
+                        To see dashboard metrics and connect to your tools, you need to configure external connections.
+                    </p>
+                    <button
+                        class="btn btn-primary"
+                        onclick="document.getElementById('settingsBtn')?.click()"
+                        style="padding: 12px 32px; font-size: 16px; cursor: pointer; background: var(--primary-color, #2196F3); color: white; border: none; border-radius: 8px; transition: all 0.3s ease;"
+                    >
+                        ⚙️ Open Settings & Run Setup Wizard
+                    </button>
+                    <p style="color: var(--text-secondary, #888); margin-top: 16px; font-size: 14px;">
+                        Or continue using the chat interface without external tools
+                    </p>
+                </div>
+            `;
+        }
     }
 }
 

@@ -541,42 +541,71 @@ class DashboardApp {
     loadToolInIframe(url) {
         const iframe = document.getElementById('toolIframe');
         const loading = document.querySelector('.tool-loading');
-        
+
+        console.log(`📡 Loading iframe with URL: ${url}`);
+
         // Show loading
         loading.style.display = 'flex';
-        
-        // Set up iframe load handler
-        const onLoad = () => {
-            loading.style.display = 'none';
-            iframe.removeEventListener('load', onLoad);
-        };
-        
-        iframe.addEventListener('load', onLoad);
-        
-        // Handle load errors
-        const onError = () => {
-            loading.innerHTML = `
-                <div style="text-align: center; color: var(--text-secondary);">
-                    <div style="font-size: 3rem; margin-bottom: 1rem;">❌</div>
-                    <p>Failed to load tool</p>
-                    <button onclick="window.app.refreshCurrentTool()" class="btn btn-primary" style="margin-top: 1rem;">
-                        Try Again
-                    </button>
-                </div>
-            `;
-        };
-        
-        iframe.addEventListener('error', onError);
-        
-        // Load the URL
-        iframe.src = url;
-        
-        // Add timeout fallback
+        loading.innerHTML = `
+            <div style="text-align: center;">
+                <div class="loading-spinner"></div>
+                <p>Loading tool...</p>
+            </div>
+        `;
+
+        // Clear any existing iframe content
+        iframe.src = 'about:blank';
+
+        // Small delay to ensure iframe is cleared
         setTimeout(() => {
-            if (loading.style.display !== 'none') {
-                onError();
-            }
-        }, 10000);
+            // Set up iframe load handler
+            const onLoad = () => {
+                console.log('✅ Iframe loaded successfully');
+                loading.style.display = 'none';
+                iframe.removeEventListener('load', onLoad);
+                iframe.removeEventListener('error', onError);
+            };
+
+            // Handle load errors
+            const onError = (e) => {
+                console.error('❌ Iframe load error:', e);
+                loading.innerHTML = `
+                    <div style="text-align: center; color: var(--text-secondary); padding: 40px;">
+                        <div style="font-size: 3rem; margin-bottom: 1rem;">❌</div>
+                        <h3>Failed to load tool</h3>
+                        <p style="margin: 20px 0; max-width: 500px; margin-left: auto; margin-right: auto;">
+                            The tool couldn't be loaded. This might be due to:
+                        </p>
+                        <ul style="text-align: left; max-width: 500px; margin: 20px auto;">
+                            <li>The tool's server blocking iframe embedding (X-Frame-Options)</li>
+                            <li>Network connectivity issues</li>
+                            <li>The tool URL is incorrect or the tool is down</li>
+                        </ul>
+                        <button onclick="window.app.refreshCurrentTool()" class="btn btn-primary" style="margin-top: 1rem;">
+                            🔄 Try Again
+                        </button>
+                        <button onclick="window.app.showChatView()" class="btn btn-secondary" style="margin-top: 1rem; margin-left: 10px;">
+                            ← Back to Dashboard
+                        </button>
+                    </div>
+                `;
+            };
+
+            iframe.addEventListener('load', onLoad);
+            iframe.addEventListener('error', onError);
+
+            // Load the URL
+            console.log(`🚀 Setting iframe src to: ${url}`);
+            iframe.src = url;
+
+            // Add timeout fallback (increased to 15 seconds for slower networks)
+            setTimeout(() => {
+                if (loading.style.display !== 'none') {
+                    console.warn('⚠️ Iframe load timeout - tool may be blocked or slow');
+                    onError(new Error('Load timeout'));
+                }
+            }, 15000);
+        }, 100);
     }
 
     refreshCurrentTool() {

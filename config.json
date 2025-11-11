@@ -41,12 +41,21 @@
       "url": "https://script.google.com/macros/s/AKfycbxFXQqrbqcpqUyX3aVR2hKc8rGMN2KIbmloOfuFBUEgwc9hLbnkySd9NTBzGjZ1HiybJw/exec",
       "color": "#9C27B0",
       "keywords": ["tools", "rental", "checkout", "equipment", "maintenance"]
+    },
+    "logistics": {
+      "_comment": "Logistics Planner - Netlify deployed web app",
+      "name": "Logistics Planner",
+      "description": "Transportation planning, procurement tracking, and emergency logistics",
+      "icon": "🚛",
+      "url": "https://dailychessmap.netlify.app/",
+      "color": "#E91E63",
+      "keywords": ["logistics", "transportation", "procurement", "emergency", "errand", "delivery", "route", "shipping"]
     }
   },
   "ai": {
     "enabled": true,
-    "fallbackMessage": "I can help you with inventory, grading decisions, scheduling, or tool rentals. What would you like to do?",
-    "routingPrompt": "Analyze this query and determine which tool would be most helpful: inventory management, plant grading, scheduling, or tool checkout. Return only: 'inventory', 'grading', 'scheduler', 'tools', or 'general'."
+    "fallbackMessage": "I can help you with inventory, grading decisions, scheduling, tool rentals, or logistics planning. What would you like to do?",
+    "routingPrompt": "Analyze this query and determine which tool would be most helpful: inventory management, plant grading, scheduling, tool checkout, or logistics planning. Return only: 'inventory', 'grading', 'scheduler', 'tools', 'logistics', or 'general'."
   },
   "deployment": {
     "_comment": "Deployment strategy: Backend (code.js) goes to Google Apps Script. Frontend (this dashboard) goes to GitHub Pages or Netlify.",

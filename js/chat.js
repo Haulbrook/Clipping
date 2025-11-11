@@ -13,7 +13,8 @@ class ChatManager {
             inventory: ['inventory', 'stock', 'plants', 'supplies', 'materials', 'clippings', 'search', 'find', 'boxwood', 'mulch', 'fertilizer'],
             grading: ['grade', 'quality', 'assess', 'evaluation', 'sell', 'pricing', 'condition', 'value'],
             scheduler: ['schedule', 'calendar', 'crew', 'task', 'appointment', 'plan', 'assign', 'daily', 'tomorrow'],
-            tools: ['tools', 'rental', 'checkout', 'equipment', 'borrow', 'return', 'maintenance']
+            tools: ['tools', 'rental', 'checkout', 'equipment', 'borrow', 'return', 'maintenance'],
+            logistics: ['logistics', 'transportation', 'procurement', 'emergency', 'errand', 'delivery', 'route', 'shipping', 'transport', 'dispatch']
         };
 
         // Skills (will be initialized by main.js)
@@ -310,13 +311,13 @@ class ChatManager {
         // General AI-like responses for common queries
         const generalResponses = {
             greeting: [
-                "Hello! I'm here to help you with Deep Roots operations. I can assist with inventory management, plant grading, crew scheduling, and tool checkout.",
-                "Hi there! What can I help you with today? I can help with inventory, grading, scheduling, or tools.",
+                "Hello! I'm here to help you with Deep Roots operations. I can assist with inventory management, plant grading, crew scheduling, tool checkout, and logistics planning.",
+                "Hi there! What can I help you with today? I can help with inventory, grading, scheduling, tools, or logistics.",
                 "Welcome to Deep Roots Operations! I'm ready to help with any operational questions you have."
             ],
             help: [
-                "I can help you with:\n\n🌱 **Inventory Management** - Search stock, check quantities, manage supplies\n⭐ **Plant Grading** - Quality assessment and pricing decisions\n📅 **Crew Scheduling** - Daily planning and task assignments\n🔧 **Tool Checkout** - Rental and equipment management\n\nWhat would you like to work on?",
-                "Here's what I can do for you:\n\n• Check inventory and stock levels\n• Help grade plants for quality and pricing\n• Assist with crew scheduling and planning\n• Manage tool rentals and checkouts\n\nJust ask me anything related to these areas!"
+                "I can help you with:\n\n🌱 **Inventory Management** - Search stock, check quantities, manage supplies\n⭐ **Plant Grading** - Quality assessment and pricing decisions\n📅 **Crew Scheduling** - Daily planning and task assignments\n🔧 **Tool Checkout** - Rental and equipment management\n🚛 **Logistics Planning** - Transportation routing and procurement tracking\n\nWhat would you like to work on?",
+                "Here's what I can do for you:\n\n• Check inventory and stock levels\n• Help grade plants for quality and pricing\n• Assist with crew scheduling and planning\n• Manage tool rentals and checkouts\n• Plan logistics and coordinate deliveries\n\nJust ask me anything related to these areas!"
             ],
             thanks: [
                 "You're welcome! Let me know if you need help with anything else.",
@@ -382,6 +383,11 @@ class ChatManager {
                 `I can help you with tool rentals and equipment checkout. Let me access the tool management system for "${keywords.join(', ')}" requests.`,
                 `For equipment management and tool checkout, I'll connect you to our rental system to track availability and assignments.`,
                 `Let me open the tool checkout system to help you manage equipment rentals and track tool usage.`
+            ],
+            logistics: [
+                `I can help you with logistics planning and transportation management. Let me open the logistics planner to handle "${keywords.join(', ')}" routing and coordination.`,
+                `For transportation planning and procurement tracking, I'll connect you to our logistics system to optimize routes and deliveries.`,
+                `Let me access the logistics planner to help you coordinate shipments, plan routes, and manage emergency logistics.`
             ]
         };
 

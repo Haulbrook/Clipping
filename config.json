@@ -57,6 +57,18 @@
     "fallbackMessage": "I can help you with inventory, grading decisions, scheduling, tool rentals, or logistics planning. What would you like to do?",
     "routingPrompt": "Analyze this query and determine which tool would be most helpful: inventory management, plant grading, scheduling, tool checkout, or logistics planning. Return only: 'inventory', 'grading', 'scheduler', 'tools', 'logistics', or 'general'."
   },
+  "appleOverseer": {
+    "enabled": true,
+    "maxConcurrentOperations": 5,
+    "maxOperationDuration": 300000,
+    "enableQualityControl": true,
+    "enableToolCoordination": true
+  },
+  "skills": {
+    "enableDeconstructionSkill": true,
+    "enableForwardThinkerSkill": true,
+    "enableAppleOverseer": true
+  },
   "deployment": {
     "_comment": "Deployment strategy: Backend (code.js) goes to Google Apps Script. Frontend (this dashboard) goes to GitHub Pages or Netlify.",
     "backend": {

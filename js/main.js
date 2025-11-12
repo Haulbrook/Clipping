@@ -23,6 +23,7 @@ class DashboardApp {
         // Skills (will be initialized after configuration)
         this.deconstructionSkill = null;
         this.forwardThinkerSkill = null;
+        this.appleOverseer = null;
 
         this.init();
     }
@@ -108,6 +109,7 @@ class DashboardApp {
             // Check if skills are enabled in config
             const enableDeconstruction = this.config.enableDeconstructionSkill !== false;
             const enableForwardThinker = this.config.enableForwardThinkerSkill !== false;
+            const enableOverseer = this.config.enableAppleOverseer !== false;
 
             if (enableDeconstruction && window.DeconstructionRebuildSkill) {
                 this.deconstructionSkill = new DeconstructionRebuildSkill(this.config);
@@ -118,9 +120,277 @@ class DashboardApp {
                 this.forwardThinkerSkill = new ForwardThinkerSkill(this.config);
                 console.log('✅ Forward Thinker Skill initialized');
             }
+
+            if (enableOverseer && window.AppleOverseer) {
+                this.appleOverseer = new AppleOverseer(this.config);
+                console.log('✅ Apple Overseer initialized');
+                // Initialize overseer UI
+                this.setupOverseerUI();
+            }
         } catch (error) {
             console.warn('⚠️ Skills initialization failed:', error);
         }
+    }
+
+    /**
+     * Setup Apple Overseer UI and event listeners
+     */
+    setupOverseerUI() {
+        if (!this.appleOverseer) return;
+
+        // Update overseer status badge
+        this.updateOverseerStatus();
+
+        // Setup periodic status updates
+        setInterval(() => {
+            this.updateOverseerStatus();
+        }, 5000); // Update every 5 seconds
+
+        // Setup event listeners for overseer panel
+        const overseerBtn = document.getElementById('overseerBtn');
+        const overseerPanel = document.getElementById('overseerPanel');
+        const overseerPanelClose = document.getElementById('overseerPanelClose');
+        const overseerRefreshBtn = document.getElementById('overseerRefreshBtn');
+        const overseerReportBtn = document.getElementById('overseerReportBtn');
+        const overseerClearHistoryBtn = document.getElementById('overseerClearHistoryBtn');
+
+        // Toggle overseer panel
+        if (overseerBtn) {
+            overseerBtn.addEventListener('click', () => {
+                this.toggleOverseerPanel();
+            });
+        }
+
+        // Close overseer panel
+        if (overseerPanelClose) {
+            overseerPanelClose.addEventListener('click', () => {
+                if (overseerPanel) {
+                    overseerPanel.classList.add('hidden');
+                }
+            });
+        }
+
+        // Refresh overseer data
+        if (overseerRefreshBtn) {
+            overseerRefreshBtn.addEventListener('click', () => {
+                this.updateOverseerPanel();
+                this.ui.showNotification('Overseer data refreshed', 'success');
+            });
+        }
+
+        // Generate report
+        if (overseerReportBtn) {
+            overseerReportBtn.addEventListener('click', () => {
+                const report = this.appleOverseer.generateReport();
+                console.log('🍎 Overseer Report:', report);
+                this.showOverseerReport(report);
+            });
+        }
+
+        // Clear history
+        if (overseerClearHistoryBtn) {
+            overseerClearHistoryBtn.addEventListener('click', () => {
+                if (confirm('Are you sure you want to clear the operation history?')) {
+                    this.appleOverseer.clearHistory();
+                    this.updateOverseerPanel();
+                    this.ui.showNotification('Operation history cleared', 'success');
+                }
+            });
+        }
+
+        console.log('✅ Apple Overseer UI initialized');
+    }
+
+    /**
+     * Toggle overseer panel visibility
+     */
+    toggleOverseerPanel() {
+        const panel = document.getElementById('overseerPanel');
+        if (!panel) return;
+
+        const isHidden = panel.classList.contains('hidden');
+        if (isHidden) {
+            panel.classList.remove('hidden');
+            this.updateOverseerPanel();
+        } else {
+            panel.classList.add('hidden');
+        }
+    }
+
+    /**
+     * Update overseer status badge
+     */
+    updateOverseerStatus() {
+        if (!this.appleOverseer) return;
+
+        const badge = document.getElementById('overseerStatusBadge');
+        const healthBadge = document.getElementById('overseerHealthBadge');
+
+        if (badge) {
+            const status = this.appleOverseer.getStatus();
+            badge.className = `overseer-status-badge ${status.health}`;
+        }
+
+        if (healthBadge) {
+            const status = this.appleOverseer.getStatus();
+            healthBadge.textContent = status.health.charAt(0).toUpperCase() + status.health.slice(1);
+            healthBadge.className = `overseer-health-badge ${status.health}`;
+        }
+    }
+
+    /**
+     * Update overseer panel content
+     */
+    updateOverseerPanel() {
+        if (!this.appleOverseer) return;
+
+        const status = this.appleOverseer.getStatus();
+
+        // Update stats
+        document.getElementById('overseerActiveOps').textContent = status.operationCount;
+        document.getElementById('overseerActiveTools').textContent = status.activeToolCount;
+
+        // Calculate success rate
+        const totalOps = this.appleOverseer.operationHistory.length;
+        const successfulOps = this.appleOverseer.operationHistory.filter(op => op.status === 'completed').length;
+        const successRate = totalOps > 0 ? ((successfulOps / totalOps) * 100).toFixed(0) : 100;
+        document.getElementById('overseerSuccessRate').textContent = `${successRate}%`;
+
+        // Update active operations
+        this.updateOverseerOperations(status.activeOperations);
+
+        // Update alerts
+        this.updateOverseerAlerts(status.alerts);
+
+        // Update recommendations
+        const recommendations = this.appleOverseer.getRecommendations();
+        this.updateOverseerRecommendations(recommendations);
+
+        // Update history
+        this.updateOverseerHistory(status.recentHistory);
+    }
+
+    /**
+     * Update active operations list
+     */
+    updateOverseerOperations(operations) {
+        const list = document.getElementById('overseerOperationsList');
+        if (!list) return;
+
+        if (operations.length === 0) {
+            list.innerHTML = '<p class="overseer-empty">No active operations</p>';
+            return;
+        }
+
+        list.innerHTML = operations.map(op => `
+            <div class="overseer-operation-item">
+                <div class="operation-header">
+                    <span class="operation-id">${op.id}</span>
+                    <span class="operation-status ${op.status}">${op.status}</span>
+                </div>
+                <div class="operation-details">
+                    <span class="operation-tool">${op.tool}</span> • ${op.action || 'unknown'} •
+                    ${Math.floor((Date.now() - op.startTime) / 1000)}s elapsed
+                </div>
+            </div>
+        `).join('');
+    }
+
+    /**
+     * Update alerts list
+     */
+    updateOverseerAlerts(alerts) {
+        const list = document.getElementById('overseerAlertsList');
+        const section = document.getElementById('overseerAlertsSection');
+        if (!list || !section) return;
+
+        if (alerts.length === 0) {
+            section.style.display = 'none';
+            return;
+        }
+
+        section.style.display = 'block';
+        list.innerHTML = alerts.map(alert => `
+            <div class="overseer-alert-item">
+                <span class="alert-icon ${alert.type}">${alert.type === 'critical' ? '🔴' : '⚠️'}</span>
+                <div class="alert-content">
+                    <p class="alert-message">${alert.message}</p>
+                </div>
+            </div>
+        `).join('');
+    }
+
+    /**
+     * Update recommendations list
+     */
+    updateOverseerRecommendations(recommendations) {
+        const list = document.getElementById('overseerRecommendationsList');
+        const section = document.getElementById('overseerRecommendationsSection');
+        if (!list || !section) return;
+
+        if (recommendations.length === 0) {
+            section.style.display = 'none';
+            return;
+        }
+
+        section.style.display = 'block';
+        list.innerHTML = recommendations.map(rec => `
+            <div class="overseer-recommendation-item">
+                <span class="recommendation-icon">💡</span>
+                <div class="recommendation-content">
+                    <div class="recommendation-type">${rec.type}</div>
+                    <p class="recommendation-message">${rec.message}</p>
+                    <span class="recommendation-priority ${rec.priority}">${rec.priority}</span>
+                </div>
+            </div>
+        `).join('');
+    }
+
+    /**
+     * Update history list
+     */
+    updateOverseerHistory(history) {
+        const list = document.getElementById('overseerHistoryList');
+        if (!list) return;
+
+        if (history.length === 0) {
+            list.innerHTML = '<p class="overseer-empty">No recent operations</p>';
+            return;
+        }
+
+        list.innerHTML = history.map(op => `
+            <div class="overseer-history-item">
+                <div class="history-operation">
+                    <div class="history-id">${op.id}</div>
+                    <div class="history-details">
+                        <span class="operation-tool">${op.tool}</span> • ${op.status}
+                    </div>
+                </div>
+                <div class="history-duration">${op.duration ? `${op.duration}ms` : 'N/A'}</div>
+            </div>
+        `).join('');
+    }
+
+    /**
+     * Show overseer report in a modal or notification
+     */
+    showOverseerReport(report) {
+        const message = `
+📊 Overseer Report
+
+Summary:
+• Total Operations: ${report.summary.totalOperations}
+• Success Rate: ${report.summary.successRate}
+• Average Duration: ${report.summary.averageDuration}
+• System Health: ${report.summary.currentHealth}
+
+Active: ${report.activeOperations} operations
+Alerts: ${report.alerts.length}
+Recommendations: ${report.recommendations.length}
+        `;
+
+        alert(message);
+        console.log('Full Report:', report);
     }
 
     /**
@@ -204,9 +474,10 @@ class DashboardApp {
         const skillsEnabled = [];
         if (this.deconstructionSkill) skillsEnabled.push('🧩 Complex Query Analysis');
         if (this.forwardThinkerSkill) skillsEnabled.push('🔮 Predictive Suggestions');
+        if (this.appleOverseer) skillsEnabled.push('🍎 Apple Overseer - Quality Control & Coordination');
 
         if (skillsEnabled.length > 0) {
-            const message = `Welcome! I'm powered by advanced AI skills:\n\n${skillsEnabled.join('\n')}\n\nI can help break down complex queries and predict what you might need next!`;
+            const message = `Welcome! I'm powered by advanced AI skills:\n\n${skillsEnabled.join('\n')}\n\nI can help break down complex queries, predict what you might need next, and oversee operations with quality control!`;
             setTimeout(() => {
                 if (this.chat.addMessage) {
                     this.chat.addMessage(message, 'assistant');
@@ -608,6 +879,7 @@ class DashboardApp {
                 tools: { url: document.getElementById('toolsUrl').value }
             },
             darkMode: document.getElementById('darkMode').checked,
+            enableAppleOverseer: document.getElementById('enableAppleOverseer')?.checked ?? true,
             enableDeconstructionSkill: document.getElementById('enableDeconstructionSkill')?.checked ?? true,
             enableForwardThinkerSkill: document.getElementById('enableForwardThinkerSkill')?.checked ?? true
         };
@@ -628,6 +900,7 @@ class DashboardApp {
 
         // Update config
         Object.assign(this.config.services, settings.services);
+        this.config.enableAppleOverseer = settings.enableAppleOverseer;
         this.config.enableDeconstructionSkill = settings.enableDeconstructionSkill;
         this.config.enableForwardThinkerSkill = settings.enableForwardThinkerSkill;
 

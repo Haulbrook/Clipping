@@ -130,6 +130,10 @@
                     <p id="pageSubtitle">What can I help you with today?</p>
                 </div>
                 <div class="header-actions">
+                    <button id="overseerBtn" class="header-btn overseer-btn" aria-label="Apple Overseer Status" title="Apple Overseer">
+                        <span class="overseer-icon">🍎</span>
+                        <span class="overseer-status-badge" id="overseerStatusBadge"></span>
+                    </button>
                     <button id="helpBtn" class="header-btn" aria-label="Help">❓</button>
                     <div class="status-indicator online" id="statusIndicator"></div>
                 </div>
@@ -299,6 +303,13 @@
                         </p>
                     </div>
                     <div class="setting-item">
+                        <label for="enableAppleOverseer">🍎 Enable Apple Overseer:</label>
+                        <input type="checkbox" id="enableAppleOverseer" checked>
+                        <p style="font-size: 12px; color: var(--text-secondary, #666); margin-top: 5px;">
+                            Oversees operations, coordinates tools, and provides quality control
+                        </p>
+                    </div>
+                    <div class="setting-item">
                         <label for="enableDeconstructionSkill">Enable Complex Query Analysis:</label>
                         <input type="checkbox" id="enableDeconstructionSkill">
                     </div>
@@ -315,6 +326,77 @@
         </div>
     </div>
 
+    <!-- Apple Overseer Panel -->
+    <div id="overseerPanel" class="overseer-panel hidden">
+        <div class="overseer-panel-header">
+            <div class="overseer-panel-title">
+                <span class="overseer-icon">🍎</span>
+                <h3>Apple Overseer</h3>
+                <span class="overseer-health-badge" id="overseerHealthBadge">Healthy</span>
+            </div>
+            <button class="overseer-panel-close" id="overseerPanelClose" aria-label="Close">×</button>
+        </div>
+
+        <div class="overseer-panel-body">
+            <!-- Status Summary -->
+            <div class="overseer-section">
+                <h4>System Status</h4>
+                <div class="overseer-stats">
+                    <div class="overseer-stat">
+                        <span class="stat-label">Active Operations</span>
+                        <span class="stat-value" id="overseerActiveOps">0</span>
+                    </div>
+                    <div class="overseer-stat">
+                        <span class="stat-label">Active Tools</span>
+                        <span class="stat-value" id="overseerActiveTools">0</span>
+                    </div>
+                    <div class="overseer-stat">
+                        <span class="stat-label">Success Rate</span>
+                        <span class="stat-value" id="overseerSuccessRate">100%</span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Active Operations -->
+            <div class="overseer-section">
+                <h4>Active Operations</h4>
+                <div class="overseer-operations-list" id="overseerOperationsList">
+                    <p class="overseer-empty">No active operations</p>
+                </div>
+            </div>
+
+            <!-- Alerts -->
+            <div class="overseer-section" id="overseerAlertsSection">
+                <h4>Alerts</h4>
+                <div class="overseer-alerts-list" id="overseerAlertsList">
+                    <p class="overseer-empty">No alerts</p>
+                </div>
+            </div>
+
+            <!-- Recommendations -->
+            <div class="overseer-section" id="overseerRecommendationsSection">
+                <h4>Recommendations</h4>
+                <div class="overseer-recommendations-list" id="overseerRecommendationsList">
+                    <p class="overseer-empty">No recommendations</p>
+                </div>
+            </div>
+
+            <!-- Recent History -->
+            <div class="overseer-section">
+                <h4>Recent Operations</h4>
+                <div class="overseer-history-list" id="overseerHistoryList">
+                    <p class="overseer-empty">No recent operations</p>
+                </div>
+            </div>
+        </div>
+
+        <div class="overseer-panel-footer">
+            <button class="btn btn-secondary" id="overseerRefreshBtn">🔄 Refresh</button>
+            <button class="btn btn-secondary" id="overseerReportBtn">📊 Generate Report</button>
+            <button class="btn btn-secondary" id="overseerClearHistoryBtn">🗑️ Clear History</button>
+        </div>
+    </div>
+
     <!-- Toast Notification Container -->
     <div id="toastContainer" class="toast-container"></div>
 
@@ -327,6 +409,8 @@
     <script src="js/setupWizard.js"></script>
     <script src="js/deconstructionRebuildSkill.js"></script>
     <script src="js/forwardThinkerSkill.js"></script>
+    <!-- Apple Overseer -->
+    <script src="js/appleOverseer.js"></script>
     <!-- Core Components -->
     <script src="js/chat.js"></script>
     <script src="js/tools.js"></script>

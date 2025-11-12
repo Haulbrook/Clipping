@@ -41,6 +41,15 @@ class ChatManager {
         if (window.app && window.app.appleOverseer) {
             this.appleOverseer = window.app.appleOverseer;
             console.log('Apple Overseer connected to ChatManager');
+
+            // Connect overseer to skills for quality control
+            if (this.deconstructionSkill && this.deconstructionSkill.connectOverseer) {
+                this.deconstructionSkill.connectOverseer(this.appleOverseer);
+            }
+
+            if (this.forwardThinkerSkill && this.forwardThinkerSkill.connectOverseer) {
+                this.forwardThinkerSkill.connectOverseer(this.appleOverseer);
+            }
         }
     }
 

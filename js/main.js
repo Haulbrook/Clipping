@@ -124,6 +124,16 @@ class DashboardApp {
             if (enableOverseer && window.AppleOverseer) {
                 this.appleOverseer = new AppleOverseer(this.config);
                 console.log('✅ Apple Overseer initialized');
+
+                // Connect overseer to AI skills for quality control and coordination
+                if (this.deconstructionSkill && this.deconstructionSkill.connectOverseer) {
+                    this.deconstructionSkill.connectOverseer(this.appleOverseer);
+                }
+
+                if (this.forwardThinkerSkill && this.forwardThinkerSkill.connectOverseer) {
+                    this.forwardThinkerSkill.connectOverseer(this.appleOverseer);
+                }
+
                 // Initialize overseer UI
                 this.setupOverseerUI();
             }

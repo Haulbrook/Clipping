@@ -20,6 +20,7 @@ class ChatManager {
         // Skills (will be initialized by main.js)
         this.deconstructionSkill = null;
         this.forwardThinkerSkill = null;
+        this.appleOverseer = null;
     }
 
     /**
@@ -34,6 +35,12 @@ class ChatManager {
         if (window.ForwardThinkerSkill) {
             this.forwardThinkerSkill = new ForwardThinkerSkill(config);
             console.log('Forward Thinker Skill initialized');
+        }
+
+        // Get Apple Overseer instance from main app
+        if (window.app && window.app.appleOverseer) {
+            this.appleOverseer = window.app.appleOverseer;
+            console.log('Apple Overseer connected to ChatManager');
         }
     }
 
@@ -136,58 +143,133 @@ class ChatManager {
 
     async processMessage(message) {
         let response = { content: '', type: 'general' };
+        let operationId = null;
 
-        // Step 1: Check if query is complex and apply Deconstruction & Rebuild skill
-        if (this.deconstructionSkill) {
-            const complexityAnalysis = this.deconstructionSkill.isComplexQuery(message);
+        // Step 1: Register operation with Apple Overseer
+        if (this.appleOverseer) {
+            operationId = `msg_${Date.now()}`;
+            const registration = this.appleOverseer.registerOperation(operationId, {
+                tool: 'chat',
+                action: 'processMessage',
+                user: 'current_user',
+                priority: 'normal',
+                details: { messageLength: message.length }
+            });
 
-            if (complexityAnalysis.isComplex) {
-                const deconstructed = this.deconstructionSkill.process(message);
-
-                if (deconstructed.success) {
-                    // Generate formatted response showing the breakdown
-                    const breakdownResponse = this.formatDeconstructionResponse(deconstructed);
-                    response.content = breakdownResponse;
-                    response.type = 'deconstruction';
-                    response.deconstructionData = deconstructed;
-
-                    return response;
-                }
+            // Check if operation was blocked
+            if (!registration.success && registration.blocked) {
+                response.content = `🍎 **Operation Blocked by Apple Overseer**\n\n${registration.reason}\n\n**Recommendations:**\n${registration.recommendations.map(r => `• ${r}`).join('\n')}`;
+                response.type = 'overseer_blocked';
+                return response;
             }
         }
 
-        // Step 2: Determine which tool this message is most relevant to
-        const toolRoute = this.determineToolRoute(message);
+        try {
+            // Step 2: Check if query is complex and apply Deconstruction & Rebuild skill
+            if (this.deconstructionSkill) {
+                const complexityAnalysis = this.deconstructionSkill.isComplexQuery(message);
 
-        // Step 3: Apply Forward Thinker skill to predict next steps
-        let forwardThinking = null;
-        if (this.forwardThinkerSkill) {
-            const actionType = this.forwardThinkerSkill.classifyAction(message);
-            const context = {
-                toolId: toolRoute.toolId,
-                confidence: toolRoute.confidence,
-                currentTime: new Date().toISOString(),
-                hasResults: false,
-                requiresNotification: message.toLowerCase().includes('notify') || message.toLowerCase().includes('alert')
-            };
+                if (complexityAnalysis.isComplex) {
+                    const deconstructed = this.deconstructionSkill.process(message);
 
-            forwardThinking = this.forwardThinkerSkill.predictNextSteps(message, context);
+                    if (deconstructed.success) {
+                        // Generate formatted response showing the breakdown
+                        const breakdownResponse = this.formatDeconstructionResponse(deconstructed);
+                        response.content = breakdownResponse;
+                        response.type = 'deconstruction';
+                        response.deconstructionData = deconstructed;
+
+                        // Complete operation successfully
+                        if (this.appleOverseer && operationId) {
+                            this.appleOverseer.completeOperation(operationId, { success: true, data: deconstructed });
+                        }
+
+                        return response;
+                    }
+                }
+            }
+
+            // Step 3: Determine which tool this message is most relevant to
+            const toolRoute = this.determineToolRoute(message);
+
+            // Step 4: Validate tool operation with Apple Overseer
+            if (this.appleOverseer && toolRoute.toolId !== 'general') {
+                const toolOpId = `tool_${Date.now()}`;
+                const toolValidation = this.appleOverseer.registerOperation(toolOpId, {
+                    tool: toolRoute.toolId,
+                    action: 'query',
+                    user: 'current_user',
+                    priority: 'normal'
+                });
+
+                if (!toolValidation.success && toolValidation.blocked) {
+                    response.content = `🍎 **Tool Access Restricted**\n\n${toolValidation.reason}\n\n**Recommendations:**\n${toolValidation.recommendations.map(r => `• ${r}`).join('\n')}`;
+                    response.type = 'overseer_blocked';
+
+                    // Complete main operation
+                    if (operationId) {
+                        this.appleOverseer.completeOperation(operationId, { success: false, errors: [toolValidation.reason] });
+                    }
+
+                    return response;
+                }
+
+                // Store tool operation ID for later completion
+                response.toolOperationId = toolOpId;
+            }
+
+            // Step 5: Apply Forward Thinker skill to predict next steps
+            let forwardThinking = null;
+            if (this.forwardThinkerSkill) {
+                const actionType = this.forwardThinkerSkill.classifyAction(message);
+                const context = {
+                    toolId: toolRoute.toolId,
+                    confidence: toolRoute.confidence,
+                    currentTime: new Date().toISOString(),
+                    hasResults: false,
+                    requiresNotification: message.toLowerCase().includes('notify') || message.toLowerCase().includes('alert')
+                };
+
+                forwardThinking = this.forwardThinkerSkill.predictNextSteps(message, context);
+            }
+
+            // Step 6: Generate response based on routing
+            if (toolRoute.toolId === 'general') {
+                response = this.generateGeneralResponse(message);
+            } else {
+                response = this.generateToolSpecificResponse(message, toolRoute);
+            }
+
+            // Step 7: Append forward thinking suggestions if available
+            if (forwardThinking && forwardThinking.success) {
+                response.content += this.formatForwardThinkingResponse(forwardThinking.predictions);
+                response.forwardThinking = forwardThinking.predictions;
+            }
+
+            // Complete operations successfully
+            if (this.appleOverseer) {
+                if (operationId) {
+                    this.appleOverseer.completeOperation(operationId, { success: true, data: response });
+                }
+                if (response.toolOperationId) {
+                    this.appleOverseer.completeOperation(response.toolOperationId, { success: true, data: response });
+                }
+            }
+
+            return response;
+
+        } catch (error) {
+            // Complete operations with error
+            if (this.appleOverseer) {
+                if (operationId) {
+                    this.appleOverseer.completeOperation(operationId, { success: false, errors: [error.message] });
+                }
+                if (response.toolOperationId) {
+                    this.appleOverseer.completeOperation(response.toolOperationId, { success: false, errors: [error.message] });
+                }
+            }
+            throw error;
         }
-
-        // Step 4: Generate response based on routing
-        if (toolRoute.toolId === 'general') {
-            response = this.generateGeneralResponse(message);
-        } else {
-            response = this.generateToolSpecificResponse(message, toolRoute);
-        }
-
-        // Step 5: Append forward thinking suggestions if available
-        if (forwardThinking && forwardThinking.success) {
-            response.content += this.formatForwardThinkingResponse(forwardThinking.predictions);
-            response.forwardThinking = forwardThinking.predictions;
-        }
-
-        return response;
     }
 
     /**

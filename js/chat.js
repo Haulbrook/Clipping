@@ -14,7 +14,8 @@ class ChatManager {
             grading: ['grade', 'quality', 'assess', 'evaluation', 'sell', 'pricing', 'condition', 'value'],
             scheduler: ['schedule', 'calendar', 'crew', 'task', 'appointment', 'plan', 'assign', 'daily', 'tomorrow'],
             tools: ['tools', 'rental', 'checkout', 'equipment', 'borrow', 'return', 'maintenance'],
-            logistics: ['logistics', 'transportation', 'procurement', 'emergency', 'errand', 'delivery', 'route', 'shipping', 'transport', 'dispatch']
+            logistics: ['logistics', 'transportation', 'procurement', 'emergency', 'errand', 'delivery', 'route', 'shipping', 'transport', 'dispatch'],
+            chessmap: ['crew', 'location', 'map', 'chess', 'tracking', 'coordinates', 'proximity', 'nearest', 'closest', 'team', 'position', 'where', 'locate', 'find crew', 'crew map', 'who is closest']
         };
 
         // Skills (will be initialized by main.js)
@@ -479,6 +480,11 @@ class ChatManager {
                 `I can help you with logistics planning and transportation management. Let me open the logistics planner to handle "${keywords.join(', ')}" routing and coordination.`,
                 `For transportation planning and procurement tracking, I'll connect you to our logistics system to optimize routes and deliveries.`,
                 `Let me access the logistics planner to help you coordinate shipments, plan routes, and manage emergency logistics.`
+            ],
+            chessmap: [
+                `I can show you the crew location map! Let me open the DRL Chess Map to see where each team is working and who is closest to "${keywords.join(', ')}".`,
+                `Let me pull up the crew tracking map to see current team positions and find the nearest crew for support or emergency coordination.`,
+                `I'll open the DRL Chess Map to show you real-time crew locations. This will help identify which team is closest to what you need.`
             ]
         };
 

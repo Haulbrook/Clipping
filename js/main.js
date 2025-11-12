@@ -523,7 +523,8 @@ Recommendations: ${report.recommendations.length}
             inventory: localStorage.getItem('inventoryUrl'),
             grading: localStorage.getItem('gradingUrl'),
             scheduler: localStorage.getItem('schedulerUrl'),
-            tools: localStorage.getItem('toolsUrl')
+            tools: localStorage.getItem('toolsUrl'),
+            chessmap: localStorage.getItem('chessmapUrl')
         };
 
         Object.entries(savedUrls).forEach(([key, url]) => {
@@ -886,7 +887,8 @@ Recommendations: ${report.recommendations.length}
                 inventory: { url: document.getElementById('inventoryUrl').value },
                 grading: { url: document.getElementById('gradingUrl').value },
                 scheduler: { url: document.getElementById('schedulerUrl').value },
-                tools: { url: document.getElementById('toolsUrl').value }
+                tools: { url: document.getElementById('toolsUrl').value },
+                chessmap: { url: document.getElementById('chessmapUrl').value }
             },
             darkMode: document.getElementById('darkMode').checked,
             enableAppleOverseer: document.getElementById('enableAppleOverseer')?.checked ?? true,
@@ -900,6 +902,7 @@ Recommendations: ${report.recommendations.length}
         localStorage.setItem('gradingUrl', settings.services.grading.url);
         localStorage.setItem('schedulerUrl', settings.services.scheduler.url);
         localStorage.setItem('toolsUrl', settings.services.tools.url);
+        localStorage.setItem('chessmapUrl', settings.services.chessmap.url);
 
         // Apply dark mode
         if (settings.darkMode) {

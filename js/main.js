@@ -124,6 +124,16 @@ class DashboardApp {
             if (enableOverseer && window.AppleOverseer) {
                 this.appleOverseer = new AppleOverseer(this.config);
                 console.log('✅ Apple Overseer initialized');
+
+                // Connect overseer to AI skills for quality control and coordination
+                if (this.deconstructionSkill && this.deconstructionSkill.connectOverseer) {
+                    this.deconstructionSkill.connectOverseer(this.appleOverseer);
+                }
+
+                if (this.forwardThinkerSkill && this.forwardThinkerSkill.connectOverseer) {
+                    this.forwardThinkerSkill.connectOverseer(this.appleOverseer);
+                }
+
                 // Initialize overseer UI
                 this.setupOverseerUI();
             }
@@ -513,7 +523,8 @@ Recommendations: ${report.recommendations.length}
             inventory: localStorage.getItem('inventoryUrl'),
             grading: localStorage.getItem('gradingUrl'),
             scheduler: localStorage.getItem('schedulerUrl'),
-            tools: localStorage.getItem('toolsUrl')
+            tools: localStorage.getItem('toolsUrl'),
+            chessmap: localStorage.getItem('chessmapUrl')
         };
 
         Object.entries(savedUrls).forEach(([key, url]) => {
@@ -812,40 +823,73 @@ Recommendations: ${report.recommendations.length}
     loadToolInIframe(url) {
         const iframe = document.getElementById('toolIframe');
         const loading = document.querySelector('.tool-loading');
-        
+
         // Show loading
         loading.style.display = 'flex';
-        
+
+        let hasLoaded = false;
+
         // Set up iframe load handler
         const onLoad = () => {
+            hasLoaded = true;
             loading.style.display = 'none';
             iframe.removeEventListener('load', onLoad);
         };
-        
+
         iframe.addEventListener('load', onLoad);
-        
-        // Handle load errors
-        const onError = () => {
+
+        // Handle load errors (including X-Frame-Options)
+        const onError = (errorType = 'unknown') => {
             loading.innerHTML = `
-                <div style="text-align: center; color: var(--text-secondary);">
-                    <div style="font-size: 3rem; margin-bottom: 1rem;">❌</div>
-                    <p>Failed to load tool</p>
-                    <button onclick="window.app.refreshCurrentTool()" class="btn btn-primary" style="margin-top: 1rem;">
-                        Try Again
+                <div style="text-align: center; color: var(--text-secondary); padding: 2rem;">
+                    <div style="font-size: 3rem; margin-bottom: 1rem;">🔒</div>
+                    <h3 style="margin-bottom: 1rem;">Cannot Load in Frame</h3>
+                    <p style="margin-bottom: 1.5rem; max-width: 400px; margin-left: auto; margin-right: auto;">
+                        This tool cannot be displayed in an embedded frame due to security restrictions.
+                    </p>
+                    <button onclick="window.open('${url}', '_blank')" class="btn btn-primary" style="margin-right: 0.5rem;">
+                        ↗️ Open in New Tab
+                    </button>
+                    <button onclick="window.app.showDashboardView()" class="btn btn-secondary">
+                        ← Back to Dashboard
                     </button>
                 </div>
             `;
         };
-        
+
         iframe.addEventListener('error', onError);
-        
+
         // Load the URL
         iframe.src = url;
-        
-        // Add timeout fallback
+
+        // Add timeout to detect X-Frame-Options issues
+        // X-Frame-Options violations don't trigger 'error' event, so we check if iframe actually loaded
         setTimeout(() => {
-            if (loading.style.display !== 'none') {
-                onError();
+            if (!hasLoaded) {
+                // Check if iframe is accessible
+                try {
+                    const iframeDoc = iframe.contentDocument || iframe.contentWindow?.document;
+                    if (!iframeDoc || iframeDoc.body === null) {
+                        // Likely blocked by X-Frame-Options
+                        onError('x-frame-options');
+                    }
+                } catch (e) {
+                    // Cross-origin access denied - iframe loaded but from different origin
+                    // This is actually okay - the tool loaded successfully
+                    if (e.name === 'SecurityError') {
+                        hasLoaded = true;
+                        loading.style.display = 'none';
+                    } else {
+                        onError('blocked');
+                    }
+                }
+            }
+        }, 3000); // Give it 3 seconds to load
+
+        // Final timeout fallback
+        setTimeout(() => {
+            if (!hasLoaded && loading.style.display !== 'none') {
+                onError('timeout');
             }
         }, 10000);
     }
@@ -876,7 +920,8 @@ Recommendations: ${report.recommendations.length}
                 inventory: { url: document.getElementById('inventoryUrl').value },
                 grading: { url: document.getElementById('gradingUrl').value },
                 scheduler: { url: document.getElementById('schedulerUrl').value },
-                tools: { url: document.getElementById('toolsUrl').value }
+                tools: { url: document.getElementById('toolsUrl').value },
+                chessmap: { url: document.getElementById('chessmapUrl').value }
             },
             darkMode: document.getElementById('darkMode').checked,
             enableAppleOverseer: document.getElementById('enableAppleOverseer')?.checked ?? true,
@@ -890,6 +935,7 @@ Recommendations: ${report.recommendations.length}
         localStorage.setItem('gradingUrl', settings.services.grading.url);
         localStorage.setItem('schedulerUrl', settings.services.scheduler.url);
         localStorage.setItem('toolsUrl', settings.services.tools.url);
+        localStorage.setItem('chessmapUrl', settings.services.chessmap.url);
 
         // Apply dark mode
         if (settings.darkMode) {

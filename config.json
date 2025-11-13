@@ -34,13 +34,13 @@
       "keywords": ["schedule", "crew", "tasks", "calendar", "planning"]
     },
     "tools": {
-      "_comment": "Hand Tool Checkout - Google Apps Script web app",
+      "_comment": "Hand Tool Checkout - Netlify deployed web app (hand-tool-checkout.html)",
       "name": "Hand Tool Checkout",
-      "description": "Hand tool rental and checkout system",
+      "description": "Hand tool rental and checkout system with yesterday loading and physical tag tracking",
       "icon": "🔧",
-      "url": "https://script.google.com/macros/s/AKfycbxFXQqrbqcpqUyX3aVR2hKc8rGMN2KIbmloOfuFBUEgwc9hLbnkySd9NTBzGjZ1HiybJw/exec",
+      "url": "hand-tool-checkout.html",
       "color": "#9C27B0",
-      "keywords": ["tools", "rental", "checkout", "equipment", "maintenance"]
+      "keywords": ["tools", "rental", "checkout", "equipment", "maintenance", "tags", "crew"]
     },
     "logistics": {
       "_comment": "Logistics Planner - Netlify deployed web app",
@@ -50,12 +50,21 @@
       "url": "https://dailychessmap.netlify.app/",
       "color": "#E91E63",
       "keywords": ["logistics", "transportation", "procurement", "emergency", "errand", "delivery", "route", "shipping"]
+    },
+    "chessmap": {
+      "_comment": "DRL Chess Map - Real-time crew location tracking",
+      "name": "DRL Chess Map",
+      "description": "Real-time crew location map for coordinating teams, emergency support, and vendor proximity",
+      "icon": "♟️",
+      "url": "https://dailychessmap.netlify.app/",
+      "color": "#673AB7",
+      "keywords": ["crew", "location", "map", "chess", "tracking", "coordinates", "proximity", "nearest", "closest", "team", "position", "where"]
     }
   },
   "ai": {
     "enabled": true,
-    "fallbackMessage": "I can help you with inventory, grading decisions, scheduling, tool rentals, or logistics planning. What would you like to do?",
-    "routingPrompt": "Analyze this query and determine which tool would be most helpful: inventory management, plant grading, scheduling, tool checkout, or logistics planning. Return only: 'inventory', 'grading', 'scheduler', 'tools', 'logistics', or 'general'."
+    "fallbackMessage": "I can help you with inventory, grading decisions, scheduling, tool rentals, logistics planning, or crew location tracking. What would you like to do?",
+    "routingPrompt": "Analyze this query and determine which tool would be most helpful: inventory management, plant grading, scheduling, tool checkout, logistics planning, or crew location map. Return only: 'inventory', 'grading', 'scheduler', 'tools', 'logistics', 'chessmap', or 'general'."
   },
   "appleOverseer": {
     "enabled": true,

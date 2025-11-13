@@ -10,6 +10,10 @@ class ForwardThinkerSkill {
         this.predictions = [];
         this.maxHistorySize = 100;
 
+        // Apple Overseer integration
+        this.appleOverseer = null;
+        this.currentOperationId = null;
+
         // Pattern library for predicting next actions
         this.actionPatterns = {
             search: {
@@ -98,6 +102,14 @@ class ForwardThinkerSkill {
     }
 
     /**
+     * Connect to Apple Overseer for operation coordination
+     */
+    connectOverseer(overseer) {
+        this.appleOverseer = overseer;
+        console.log('✅ ForwardThinkerSkill connected to Apple Overseer');
+    }
+
+    /**
      * Analyze action and predict next steps
      */
     predictNextSteps(action, context = {}) {
@@ -105,39 +117,167 @@ class ForwardThinkerSkill {
             return { enabled: false };
         }
 
-        const actionType = this.classifyAction(action);
-        const pattern = this.actionPatterns[actionType];
+        // Register operation with Apple Overseer
+        if (this.appleOverseer) {
+            this.currentOperationId = `forward_${Date.now()}`;
+            const registration = this.appleOverseer.registerOperation(this.currentOperationId, {
+                tool: 'ForwardThinkerSkill',
+                action: 'predict',
+                user: 'system',
+                priority: 'normal',
+                resource: 'prediction_engine',
+                details: {
+                    actionLength: action.length,
+                    hasContext: Object.keys(context).length > 0
+                }
+            });
 
-        if (!pattern) {
-            return {
-                success: false,
-                reason: 'No prediction pattern found for this action type'
-            };
+            // Check if operation was blocked
+            if (!registration.success && registration.blocked) {
+                console.warn('🍎 Forward prediction blocked by overseer:', registration.reason);
+                return {
+                    success: false,
+                    reason: registration.reason,
+                    blockedByOverseer: true,
+                    recommendations: registration.recommendations
+                };
+            }
         }
 
-        // Generate predictions based on pattern and context
-        const predictions = {
-            actionType: actionType,
-            nextSteps: this.rankNextSteps(pattern.nextSteps, context),
-            questions: pattern.questions,
-            suggestions: this.contextualSuggestions(pattern.suggestions, context),
-            consequences: this.predictConsequences(action),
-            optimizations: this.identifyOptimizations(action, context),
-            timestamp: new Date().toISOString()
+        try {
+            const startTime = Date.now();
+
+            const actionType = this.classifyAction(action);
+            const pattern = this.actionPatterns[actionType];
+
+            if (!pattern) {
+                // Complete operation with failure
+                if (this.appleOverseer && this.currentOperationId) {
+                    this.appleOverseer.completeOperation(this.currentOperationId, {
+                        success: false,
+                        errors: ['No prediction pattern found for this action type']
+                    });
+                }
+
+                return {
+                    success: false,
+                    reason: 'No prediction pattern found for this action type'
+                };
+            }
+
+            // Generate predictions based on pattern and context
+            const predictions = {
+                actionType: actionType,
+                nextSteps: this.rankNextSteps(pattern.nextSteps, context),
+                questions: pattern.questions,
+                suggestions: this.contextualSuggestions(pattern.suggestions, context),
+                consequences: this.predictConsequences(action),
+                optimizations: this.identifyOptimizations(action, context),
+                timestamp: new Date().toISOString()
+            };
+
+            const duration = Date.now() - startTime;
+
+            // Perform quality check
+            const qualityMetrics = this.performQualityCheck(predictions, duration);
+
+            // Store in context history
+            this.addToContext({
+                action: action,
+                predictions: predictions,
+                context: context,
+                quality: qualityMetrics,
+                timestamp: new Date().toISOString()
+            });
+
+            // Complete operation with success
+            if (this.appleOverseer && this.currentOperationId) {
+                this.appleOverseer.completeOperation(this.currentOperationId, {
+                    success: true,
+                    data: {
+                        actionType: actionType,
+                        predictionsGenerated: predictions.nextSteps.length,
+                        optimizationsFound: predictions.optimizations.length,
+                        duration: duration,
+                        quality: qualityMetrics
+                    }
+                });
+            }
+
+            return {
+                success: true,
+                predictions: predictions,
+                qualityMetrics: qualityMetrics
+            };
+
+        } catch (error) {
+            // Complete operation with error
+            if (this.appleOverseer && this.currentOperationId) {
+                this.appleOverseer.completeOperation(this.currentOperationId, {
+                    success: false,
+                    errors: [error.message]
+                });
+            }
+            throw error;
+        }
+    }
+
+    /**
+     * Perform quality check on predictions
+     */
+    performQualityCheck(predictions, duration) {
+        const metrics = {
+            predictionCoverage: 0,
+            suggestionRelevance: 0,
+            consequenceDepth: 0,
+            performanceScore: 0,
+            overallScore: 0
         };
 
-        // Store in context history
-        this.addToContext({
-            action: action,
-            predictions: predictions,
-            context: context,
-            timestamp: new Date().toISOString()
-        });
+        // Prediction coverage: Did we generate useful next steps?
+        const minPredictions = 2;
+        const maxPredictions = 10;
+        const predictionCount = predictions.nextSteps.length;
+        if (predictionCount >= minPredictions && predictionCount <= maxPredictions) {
+            metrics.predictionCoverage = 1.0;
+        } else if (predictionCount < minPredictions) {
+            metrics.predictionCoverage = predictionCount / minPredictions;
+        } else {
+            metrics.predictionCoverage = maxPredictions / predictionCount;
+        }
 
-        return {
-            success: true,
-            predictions: predictions
-        };
+        // Suggestion relevance: Are suggestions contextual?
+        metrics.suggestionRelevance = Math.min(1.0, predictions.suggestions.length / 3);
+
+        // Consequence depth: Did we identify consequences?
+        metrics.consequenceDepth = Math.min(1.0, predictions.consequences.length / 2);
+
+        // Performance: Was the prediction fast enough?
+        const expectedDuration = 500; // 500ms
+        metrics.performanceScore = duration <= expectedDuration ? 1.0 : expectedDuration / duration;
+
+        // Overall score
+        metrics.overallScore = (
+            metrics.predictionCoverage * 0.3 +
+            metrics.suggestionRelevance * 0.3 +
+            metrics.consequenceDepth * 0.2 +
+            metrics.performanceScore * 0.2
+        );
+
+        metrics.rating = this.getRatingFromScore(metrics.overallScore);
+        metrics.duration = duration;
+
+        return metrics;
+    }
+
+    /**
+     * Get rating from score
+     */
+    getRatingFromScore(score) {
+        if (score >= 0.9) return 'excellent';
+        if (score >= 0.75) return 'good';
+        if (score >= 0.6) return 'fair';
+        return 'poor';
     }
 
     /**

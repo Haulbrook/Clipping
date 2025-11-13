@@ -9,6 +9,10 @@ class DeconstructionRebuildSkill {
         this.history = [];
         this.maxHistorySize = 50;
 
+        // Apple Overseer integration
+        this.appleOverseer = null;
+        this.currentOperationId = null;
+
         // Complexity patterns to identify complex queries
         this.complexityIndicators = [
             { pattern: /\band\b/gi, weight: 1, name: 'multiple_conditions' },
@@ -33,6 +37,14 @@ class DeconstructionRebuildSkill {
             GOAL: 'goal',
             SEQUENCE: 'sequence'
         };
+    }
+
+    /**
+     * Connect to Apple Overseer for operation coordination
+     */
+    connectOverseer(overseer) {
+        this.appleOverseer = overseer;
+        console.log('✅ DeconstructionRebuildSkill connected to Apple Overseer');
     }
 
     /**
@@ -185,25 +197,154 @@ class DeconstructionRebuildSkill {
      * Process query end-to-end (deconstruct + rebuild)
      */
     process(query) {
-        const deconstructed = this.deconstruct(query);
+        // Register operation with Apple Overseer
+        if (this.appleOverseer) {
+            this.currentOperationId = `deconstruct_${Date.now()}`;
+            const registration = this.appleOverseer.registerOperation(this.currentOperationId, {
+                tool: 'DeconstructionSkill',
+                action: 'process',
+                user: 'system',
+                priority: 'high',
+                resource: 'query_processing',
+                details: {
+                    queryLength: query.length,
+                    queryPreview: query.substring(0, 50)
+                }
+            });
 
-        if (!deconstructed.success) {
-            return {
-                success: false,
-                reason: deconstructed.reason,
-                useDirectApproach: true
-            };
+            // Check if operation was blocked
+            if (!registration.success && registration.blocked) {
+                console.warn('🍎 Deconstruction operation blocked by overseer:', registration.reason);
+                return {
+                    success: false,
+                    reason: registration.reason,
+                    blockedByOverseer: true,
+                    recommendations: registration.recommendations
+                };
+            }
         }
 
-        const rebuilt = this.rebuild(deconstructed);
+        try {
+            const startTime = Date.now();
 
-        return {
-            success: true,
-            deconstruction: deconstructed,
-            plan: rebuilt.executionPlan,
-            summary: rebuilt.summary,
-            timestamp: new Date().toISOString()
+            // Perform deconstruction
+            const deconstructed = this.deconstruct(query);
+
+            if (!deconstructed.success) {
+                // Complete operation with failure
+                if (this.appleOverseer && this.currentOperationId) {
+                    this.appleOverseer.completeOperation(this.currentOperationId, {
+                        success: false,
+                        errors: [deconstructed.reason]
+                    });
+                }
+
+                return {
+                    success: false,
+                    reason: deconstructed.reason,
+                    useDirectApproach: true
+                };
+            }
+
+            // Rebuild the plan
+            const rebuilt = this.rebuild(deconstructed);
+            const duration = Date.now() - startTime;
+
+            // Perform quality check
+            const qualityMetrics = this.performQualityCheck(deconstructed, rebuilt, duration);
+
+            // Complete operation with success
+            if (this.appleOverseer && this.currentOperationId) {
+                this.appleOverseer.completeOperation(this.currentOperationId, {
+                    success: true,
+                    data: {
+                        componentsIdentified: deconstructed.components.length,
+                        stepsGenerated: rebuilt.executionPlan.totalSteps,
+                        duration: duration,
+                        quality: qualityMetrics
+                    }
+                });
+            }
+
+            return {
+                success: true,
+                deconstruction: deconstructed,
+                plan: rebuilt.executionPlan,
+                summary: rebuilt.summary,
+                qualityMetrics: qualityMetrics,
+                timestamp: new Date().toISOString()
+            };
+
+        } catch (error) {
+            // Complete operation with error
+            if (this.appleOverseer && this.currentOperationId) {
+                this.appleOverseer.completeOperation(this.currentOperationId, {
+                    success: false,
+                    errors: [error.message]
+                });
+            }
+            throw error;
+        }
+    }
+
+    /**
+     * Perform quality check on deconstruction and rebuild
+     */
+    performQualityCheck(deconstructed, rebuilt, duration) {
+        const metrics = {
+            componentCoverage: 0,
+            stepClarity: 0,
+            dependencyResolution: 0,
+            performanceScore: 0,
+            overallScore: 0
         };
+
+        // Component coverage: Did we identify meaningful components?
+        const minComponents = 2;
+        const maxComponents = 15;
+        const componentCount = deconstructed.components.length;
+        if (componentCount >= minComponents && componentCount <= maxComponents) {
+            metrics.componentCoverage = 1.0;
+        } else if (componentCount < minComponents) {
+            metrics.componentCoverage = componentCount / minComponents;
+        } else {
+            metrics.componentCoverage = maxComponents / componentCount;
+        }
+
+        // Step clarity: Are steps well-defined?
+        const stepsWithResources = rebuilt.executionPlan.steps.filter(s => s.requiredResources.length > 0).length;
+        metrics.stepClarity = Math.min(1.0, (stepsWithResources / rebuilt.executionPlan.steps.length) + 0.5);
+
+        // Dependency resolution: Are dependencies properly identified?
+        const totalDeps = rebuilt.executionPlan.steps.reduce((sum, s) => sum + s.dependencies.length, 0);
+        metrics.dependencyResolution = Math.min(1.0, totalDeps / rebuilt.executionPlan.steps.length);
+
+        // Performance: Was the operation fast enough?
+        const expectedDuration = 1000; // 1 second
+        metrics.performanceScore = duration <= expectedDuration ? 1.0 : expectedDuration / duration;
+
+        // Overall score
+        metrics.overallScore = (
+            metrics.componentCoverage * 0.3 +
+            metrics.stepClarity * 0.3 +
+            metrics.dependencyResolution * 0.2 +
+            metrics.performanceScore * 0.2
+        );
+
+        metrics.rating = this.getRatingFromScore(metrics.overallScore);
+        metrics.duration = duration;
+
+        return metrics;
+    }
+
+    /**
+     * Get rating from score
+     */
+    getRatingFromScore(score) {
+        if (score >= 0.9) return 'excellent';
+        if (score >= 0.75) return 'good';
+        if (score >= 0.6) return 'fair';
+        return 'poor';
     }
 
     /**

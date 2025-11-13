@@ -251,11 +251,13 @@ class UIManager {
             const gradingUrl = document.getElementById('gradingUrl');
             const schedulerUrl = document.getElementById('schedulerUrl');
             const toolsUrl = document.getElementById('toolsUrl');
+            const chessmapUrl = document.getElementById('chessmapUrl');
 
             if (inventoryUrl) inventoryUrl.value = config.inventory?.url || '';
             if (gradingUrl) gradingUrl.value = config.grading?.url || '';
             if (schedulerUrl) schedulerUrl.value = config.scheduler?.url || '';
             if (toolsUrl) toolsUrl.value = config.tools?.url || '';
+            if (chessmapUrl) chessmapUrl.value = config.chessmap?.url || '';
         }
 
         // Load theme preference

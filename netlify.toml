@@ -68,3 +68,20 @@
 
 [build.processing.images]
   compress = true
+
+# Redirect rules for multiple apps
+[[redirects]]
+  from = "/hand-tool-checkout"
+  to = "/hand-tool-checkout.html"
+  status = 200
+
+[[redirects]]
+  from = "/tools"
+  to = "/hand-tool-checkout.html"
+  status = 200
+
+# SPA routing - must be last
+[[redirects]]
+  from = "/*"
+  to = "/index.html"
+  status = 200

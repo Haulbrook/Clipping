@@ -34,13 +34,13 @@
       "keywords": ["schedule", "crew", "tasks", "calendar", "planning"]
     },
     "tools": {
-      "_comment": "Hand Tool Checkout - Google Apps Script web app",
+      "_comment": "Hand Tool Checkout - Netlify deployed web app (hand-tool-checkout.html)",
       "name": "Hand Tool Checkout",
-      "description": "Hand tool rental and checkout system",
+      "description": "Hand tool rental and checkout system with yesterday loading and physical tag tracking",
       "icon": "🔧",
-      "url": "https://script.google.com/macros/s/AKfycbxFXQqrbqcpqUyX3aVR2hKc8rGMN2KIbmloOfuFBUEgwc9hLbnkySd9NTBzGjZ1HiybJw/exec",
+      "url": "hand-tool-checkout.html",
       "color": "#9C27B0",
-      "keywords": ["tools", "rental", "checkout", "equipment", "maintenance"]
+      "keywords": ["tools", "rental", "checkout", "equipment", "maintenance", "tags", "crew"]
     },
     "logistics": {
       "_comment": "Logistics Planner - Netlify deployed web app",

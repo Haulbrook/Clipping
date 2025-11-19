@@ -25,18 +25,18 @@
       "keywords": ["repair", "replace", "equipment", "cost", "analysis", "decision"]
     },
     "scheduler": {
-      "_comment": "Crew Scheduler - Google Apps Script web app",
+      "_comment": "Crew Scheduler - Local web app with drag and drop for crew assignments",
       "name": "Daily Scheduler",
-      "description": "Crew scheduling and task management",
+      "description": "Crew scheduling with drag-and-drop for crew members, trucks, equipment, jobs, and salesmen",
       "icon": "📅",
-      "url": "https://script.google.com/macros/s/AKfycbwV8EIR7jPTZn0bZ7Jgv3Pj-sn13q_Nz4kueZ9pppX_PGZrRbYjieUfkZWA41WLD2c/exec",
+      "url": "crew-scheduler.html",
       "color": "#2196F3",
       "keywords": ["schedule", "crew", "tasks", "calendar", "planning"]
     },
     "tools": {
-      "_comment": "Hand Tool Checkout - Netlify deployed web app (hand-tool-checkout.html)",
+      "_comment": "Hand Tool Checkout - Local web app with stacking and drag-and-drop functionality",
       "name": "Hand Tool Checkout",
-      "description": "Hand tool rental and checkout system with yesterday loading and physical tag tracking",
+      "description": "Hand tool checkout with stacked tool view, drag-and-drop to crews, and physical tag tracking",
       "icon": "🔧",
       "url": "hand-tool-checkout.html",
       "color": "#9C27B0",

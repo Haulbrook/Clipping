@@ -519,17 +519,20 @@ Recommendations: ${report.recommendations.length}
     }
 
     updateToolURLs() {
-        const savedUrls = {
-            inventory: localStorage.getItem('inventoryUrl'),
-            grading: localStorage.getItem('gradingUrl'),
-            scheduler: localStorage.getItem('schedulerUrl'),
-            tools: localStorage.getItem('toolsUrl'),
-            chessmap: localStorage.getItem('chessmapUrl')
-        };
+        // For each service, use localStorage URL if available, otherwise use config.json URL
+        Object.keys(this.config.services).forEach(key => {
+            const localStorageKey = `${key}Url`;
+            const savedUrl = localStorage.getItem(localStorageKey);
+            const configUrl = this.config.services[key]?.url;
 
-        Object.entries(savedUrls).forEach(([key, url]) => {
-            if (url && this.config.services[key]) {
-                this.config.services[key].url = url;
+            if (savedUrl) {
+                // Use saved URL from localStorage
+                this.config.services[key].url = savedUrl;
+            } else if (configUrl) {
+                // No saved URL, use config.json URL and save it to localStorage
+                this.config.services[key].url = configUrl;
+                localStorage.setItem(localStorageKey, configUrl);
+                console.log(`✅ Initialized ${key}Url from config.json:`, configUrl.substring(0, 50) + '...');
             }
         });
     }
@@ -745,6 +748,11 @@ Recommendations: ${report.recommendations.length}
         document.getElementById('pageTitle').textContent = 'Operations Dashboard';
         document.getElementById('pageSubtitle').textContent = 'Overview of inventory, fleet, and recent activity';
 
+        // Hide tool action buttons
+        document.getElementById('toolBackBtn').style.display = 'none';
+        document.getElementById('toolRefreshBtn').style.display = 'none';
+        document.getElementById('toolFullscreenBtn').style.display = 'none';
+
         // Refresh dashboard if available
         if (this.dashboard) {
             this.dashboard.loadMetrics();
@@ -770,6 +778,11 @@ Recommendations: ${report.recommendations.length}
         // Update header
         document.getElementById('pageTitle').textContent = 'Operations Dashboard';
         document.getElementById('pageSubtitle').textContent = 'What can I help you with today?';
+
+        // Hide tool action buttons
+        document.getElementById('toolBackBtn').style.display = 'none';
+        document.getElementById('toolRefreshBtn').style.display = 'none';
+        document.getElementById('toolFullscreenBtn').style.display = 'none';
 
         // Focus chat input
         const chatInput = document.getElementById('chatInput');
@@ -815,7 +828,12 @@ Recommendations: ${report.recommendations.length}
         document.getElementById('toolIcon').textContent = tool.icon;
         document.getElementById('toolTitle').textContent = tool.name;
         document.getElementById('toolDescription').textContent = tool.description;
-        
+
+        // Show tool action buttons in header
+        document.getElementById('toolBackBtn').style.display = 'block';
+        document.getElementById('toolRefreshBtn').style.display = 'block';
+        document.getElementById('toolFullscreenBtn').style.display = 'block';
+
         // Load tool in iframe
         this.loadToolInIframe(tool.url);
     }

@@ -37,10 +37,19 @@ class UIManager {
     }
 
     toggleSidebar() {
-        if (this.sidebarOpen) {
-            this.closeSidebar();
+        const sidebar = document.querySelector('.sidebar');
+        if (!sidebar) return;
+
+        // On desktop, toggle collapsed state
+        if (window.innerWidth > 1024) {
+            sidebar.classList.toggle('collapsed');
         } else {
-            this.openSidebar();
+            // On mobile, toggle open/close
+            if (this.sidebarOpen) {
+                this.closeSidebar();
+            } else {
+                this.openSidebar();
+            }
         }
     }
 

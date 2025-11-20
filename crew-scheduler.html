@@ -40,16 +40,17 @@
             font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
             background: linear-gradient(135deg, var(--brand-primary-light) 0%, var(--brand-primary) 100%);
             min-height: 100vh;
-            padding: 20px;
+            margin: 0;
+            padding: 0;
         }
 
         .container {
-            max-width: 1600px;
-            margin: 0 auto;
+            width: 100%;
+            height: 100vh;
             background: white;
-            border-radius: 16px;
-            box-shadow: var(--shadow-xl);
-            overflow: hidden;
+            overflow: auto;
+            display: flex;
+            flex-direction: column;
         }
 
         /* Header */
@@ -146,6 +147,8 @@
         /* Main Content */
         .content {
             padding: 30px;
+            flex: 1;
+            overflow: auto;
         }
 
         .section-title {

@@ -674,14 +674,16 @@ Recommendations: ${report.recommendations.length}
             }
         });
 
-        // Quick actions
-        document.querySelectorAll('.quick-action').forEach(btn => {
-            btn.addEventListener('click', (e) => {
-                const query = e.currentTarget.dataset.query;
+        // Quick actions - use event delegation since buttons are added dynamically
+        document.addEventListener('click', (e) => {
+            if (e.target.closest('.quick-action')) {
+                const btn = e.target.closest('.quick-action');
+                const query = btn.dataset.query;
                 if (query) {
+                    this.showChatInterface(); // Show chat if not already visible
                     this.chat.sendMessage(query);
                 }
-            });
+            }
         });
 
         // Keyboard shortcuts

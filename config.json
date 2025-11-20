@@ -59,10 +59,10 @@
   },
   "appleOverseer": {
     "enabled": true,
-    "maxConcurrentOperations": 5,
+    "maxConcurrentOperations": 50,
     "maxOperationDuration": 300000,
     "enableQualityControl": true,
-    "enableToolCoordination": true
+    "enableToolCoordination": false
   },
   "skills": {
     "enableDeconstructionSkill": true,

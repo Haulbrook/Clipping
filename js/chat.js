@@ -178,9 +178,19 @@ class ChatManager {
         const hasOpenAI = localStorage.getItem('openaiApiKey');
         if (hasOpenAI) {
             try {
-                return await this.processWithOpenAI(message, operationId);
+                const result = await this.processWithOpenAI(message, operationId);
+                // Operation is completed inside processWithOpenAI
+                return result;
             } catch (error) {
                 console.error('OpenAI processing failed, falling back to keyword matching:', error);
+                // Complete the operation as failed before falling back
+                if (this.appleOverseer && operationId) {
+                    this.appleOverseer.completeOperation(operationId, {
+                        success: false,
+                        errors: [error.message],
+                        fallback: 'keyword-matching'
+                    });
+                }
                 // Fall through to keyword matching below
             }
         }
@@ -213,31 +223,8 @@ class ChatManager {
             // Step 3: Determine which tool this message is most relevant to
             const toolRoute = this.determineToolRoute(message);
 
-            // Step 4: Validate tool operation with Apple Overseer
-            if (this.appleOverseer && toolRoute.toolId !== 'general') {
-                const toolOpId = `tool_${Date.now()}`;
-                const toolValidation = this.appleOverseer.registerOperation(toolOpId, {
-                    tool: toolRoute.toolId,
-                    action: 'query',
-                    user: 'current_user',
-                    priority: 'normal'
-                });
-
-                if (!toolValidation.success && toolValidation.blocked) {
-                    response.content = `🍎 **Tool Access Restricted**\n\n${toolValidation.reason}\n\n**Recommendations:**\n${toolValidation.recommendations.map(r => `• ${r}`).join('\n')}`;
-                    response.type = 'overseer_blocked';
-
-                    // Complete main operation
-                    if (operationId) {
-                        this.appleOverseer.completeOperation(operationId, { success: false, errors: [toolValidation.reason] });
-                    }
-
-                    return response;
-                }
-
-                // Store tool operation ID for later completion
-                response.toolOperationId = toolOpId;
-            }
+            // Note: Tool validation with Apple Overseer disabled to prevent operation buildup
+            // OpenAI handles tool routing more intelligently anyway
 
             // Step 5: Apply Forward Thinker skill to predict next steps
             let forwardThinking = null;

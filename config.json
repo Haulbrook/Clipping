@@ -58,10 +58,10 @@
     "routingPrompt": "Analyze this query and determine which tool would be most helpful: inventory management, plant grading, scheduling, tool checkout, logistics planning, or crew location map. Return only: 'inventory', 'grading', 'scheduler', 'tools', 'logistics', 'chessmap', or 'general'."
   },
   "appleOverseer": {
-    "enabled": true,
+    "enabled": false,
     "maxConcurrentOperations": 50,
     "maxOperationDuration": 300000,
-    "enableQualityControl": true,
+    "enableQualityControl": false,
     "enableToolCoordination": false
   },
   "skills": {

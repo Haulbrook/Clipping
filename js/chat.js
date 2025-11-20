@@ -151,44 +151,15 @@ class ChatManager {
 
     async processMessage(message) {
         let response = { content: '', type: 'general' };
-        let operationId = null;
-
-        // Step 1: Register operation with Apple Overseer
-        if (this.appleOverseer) {
-            operationId = `msg_${Date.now()}`;
-            const registration = this.appleOverseer.registerOperation(operationId, {
-                tool: 'chat',
-                action: 'processMessage',
-                user: 'current_user',
-                priority: 'normal',
-                details: { messageLength: message.length }
-            });
-
-            // Check if operation was blocked
-            if (!registration.success && registration.blocked) {
-                response.content = `🍎 **Operation Blocked by Apple Overseer**\n\n${registration.reason}\n\n**Recommendations:**\n${registration.recommendations.map(r => `• ${r}`).join('\n')}`;
-                response.type = 'overseer_blocked';
-                return response;
-            }
-        }
 
         // Try OpenAI first if API key is configured
         const hasOpenAI = localStorage.getItem('openaiApiKey');
         if (hasOpenAI) {
             try {
-                const result = await this.processWithOpenAI(message, operationId);
-                // Operation is completed inside processWithOpenAI
+                const result = await this.processWithOpenAI(message);
                 return result;
             } catch (error) {
                 console.error('OpenAI processing failed, falling back to keyword matching:', error);
-                // Complete the operation as failed before falling back
-                if (this.appleOverseer && operationId) {
-                    this.appleOverseer.completeOperation(operationId, {
-                        success: false,
-                        errors: [error.message],
-                        fallback: 'keyword-matching'
-                    });
-                }
                 // Fall through to keyword matching below
             }
         }
@@ -356,7 +327,7 @@ class ChatManager {
     /**
      * Process message using OpenAI
      */
-    async processWithOpenAI(message, operationId) {
+    async processWithOpenAI(message) {
         const api = window.app?.api;
         if (!api) {
             throw new Error('API manager not available');
@@ -377,32 +348,21 @@ class ChatManager {
 
         // Handle function calls
         if (aiResponse.type === 'function_call') {
-            return await this.handleOpenAIFunctionCall(aiResponse, operationId);
+            return await this.handleOpenAIFunctionCall(aiResponse);
         }
 
         // Regular message response
-        const response = {
+        return {
             content: aiResponse.content,
             type: 'ai_response',
             usage: aiResponse.usage
         };
-
-        // Complete operation successfully
-        if (this.appleOverseer && operationId) {
-            this.appleOverseer.completeOperation(operationId, {
-                success: true,
-                data: response,
-                tokensUsed: aiResponse.usage?.total_tokens
-            });
-        }
-
-        return response;
     }
 
     /**
      * Handle OpenAI function calls
      */
-    async handleOpenAIFunctionCall(aiResponse, operationId) {
+    async handleOpenAIFunctionCall(aiResponse) {
         const { function: functionName, arguments: args } = aiResponse;
 
         let result = '';
@@ -430,15 +390,6 @@ class ChatManager {
 
             default:
                 result = `Executing ${functionName}...`;
-        }
-
-        // Complete operation
-        if (this.appleOverseer && operationId) {
-            this.appleOverseer.completeOperation(operationId, {
-                success: true,
-                function: functionName,
-                arguments: args
-            });
         }
 
         return {

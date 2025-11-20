@@ -42,23 +42,14 @@
       "color": "#9C27B0",
       "keywords": ["tools", "rental", "checkout", "equipment", "maintenance", "tags", "crew"]
     },
-    "logistics": {
-      "_comment": "Logistics Planner - Netlify deployed web app",
-      "name": "Logistics Planner",
-      "description": "Transportation planning, procurement tracking, and emergency logistics",
-      "icon": "🚛",
-      "url": "https://dailychessmap.netlify.app/",
-      "color": "#E91E63",
-      "keywords": ["logistics", "transportation", "procurement", "emergency", "errand", "delivery", "route", "shipping"]
-    },
     "chessmap": {
-      "_comment": "DRL Chess Map - Real-time crew location tracking",
-      "name": "DRL Chess Map",
-      "description": "Real-time crew location map for coordinating teams, emergency support, and vendor proximity",
+      "_comment": "DRL Chess Map - Real-time crew location tracking and logistics planning",
+      "name": "DRL Chess Map & Logistics",
+      "description": "Real-time crew location tracking, logistics planning, and vendor proximity",
       "icon": "♟️",
       "url": "https://dailychessmap.netlify.app/",
       "color": "#673AB7",
-      "keywords": ["crew", "location", "map", "chess", "tracking", "coordinates", "proximity", "nearest", "closest", "team", "position", "where"]
+      "keywords": ["crew", "location", "map", "chess", "tracking", "coordinates", "proximity", "nearest", "closest", "team", "position", "where", "logistics", "transportation", "procurement", "emergency", "errand", "delivery", "route", "shipping"]
     }
   },
   "ai": {

@@ -6,6 +6,12 @@
     <meta name="description" content="Deep Roots Landscape Operations Dashboard - Unified access to all operational tools">
     <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'unsafe-inline' 'unsafe-eval'; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; style-src-elem 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com; connect-src 'self' https://script.google.com https://script.googleusercontent.com; img-src 'self' data: https:; frame-src 'self' https://script.google.com https://script.googleusercontent.com https://dailychessmap.netlify.app;">
     <title>Deep Roots Operations Dashboard</title>
+    <!-- Force light mode as default -->
+    <script>
+        if (!localStorage.getItem('theme')) {
+            localStorage.setItem('theme', 'light');
+        }
+    </script>
     <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🌱</text></svg>">
     <link rel="stylesheet" href="styles/main.css?v=20251113">
     <link rel="stylesheet" href="styles/components.css?v=20251113">
@@ -89,15 +95,10 @@
                         <span class="nav-text">Hand Tool Checkout</span>
                         <span class="nav-badge">Rental</span>
                     </button>
-                    <button class="nav-item tool-item" data-tool="logistics">
-                        <span class="nav-icon">🚛</span>
-                        <span class="nav-text">Logistics Planner</span>
-                        <span class="nav-badge">Transport</span>
-                    </button>
                     <button class="nav-item tool-item" data-tool="chessmap">
                         <span class="nav-icon">♟️</span>
-                        <span class="nav-text">DRL Chess Map</span>
-                        <span class="nav-badge">Crew Locations</span>
+                        <span class="nav-text">Chess Map & Logistics</span>
+                        <span class="nav-badge">Tracking</span>
                     </button>
                 </div>
 

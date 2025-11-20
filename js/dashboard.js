@@ -149,21 +149,59 @@ class DashboardManager {
             return;
         }
 
-        const activities = this.metrics.get('recentActivity') || [];
+        let activities = this.metrics.get('recentActivity') || [];
 
+        // Show sample data if no real data available
         if (activities.length === 0) {
-            container.innerHTML = `
-                <div class="empty-state">
-                    <div class="empty-icon">📋</div>
-                    <p>No recent activity</p>
-                    <span class="empty-hint">Changes to inventory and fleet will appear here</span>
-                </div>
-            `;
-            return;
+            activities = this.getSampleActivityData();
         }
 
         const activityHTML = activities.map(activity => this.createActivityItem(activity)).join('');
         container.innerHTML = activityHTML;
+    }
+
+    /**
+     * Get sample activity data for demonstration
+     */
+    getSampleActivityData() {
+        const now = Date.now();
+        return [
+            {
+                action: 'added',
+                itemName: 'Boxwood - 3 Gallon',
+                details: 'Added 50 units to Yard A',
+                timestamp: new Date(now - 2 * 60 * 60 * 1000), // 2 hours ago
+                user: 'John Smith'
+            },
+            {
+                action: 'maintenance',
+                itemName: 'Truck #3',
+                details: 'Scheduled for oil change',
+                timestamp: new Date(now - 5 * 60 * 60 * 1000), // 5 hours ago
+                user: 'Mike Johnson'
+            },
+            {
+                action: 'removed',
+                itemName: 'Rake - Standard',
+                details: 'Removed 2 units (broken)',
+                timestamp: new Date(now - 24 * 60 * 60 * 1000), // 1 day ago
+                user: 'Sarah Williams'
+            },
+            {
+                action: 'returned',
+                itemName: 'Wheelbarrow #5',
+                details: 'Returned to service after repair',
+                timestamp: new Date(now - 2 * 24 * 60 * 60 * 1000), // 2 days ago
+                user: 'Tom Davis'
+            },
+            {
+                action: 'added',
+                itemName: 'Holly - 5 Gallon',
+                details: 'Added 30 units to Yard B',
+                timestamp: new Date(now - 3 * 24 * 60 * 60 * 1000), // 3 days ago
+                user: 'Chris Brown'
+            }
+        ];
     }
 
     /**

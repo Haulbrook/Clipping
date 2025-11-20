@@ -296,19 +296,8 @@ class UIManager {
         if (savedTheme) {
             this.setTheme(savedTheme);
         } else {
-            // Auto-detect system preference
-            if (window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches) {
-                this.setTheme('dark');
-            }
-        }
-        
-        // Listen for system theme changes
-        if (window.matchMedia) {
-            window.matchMedia('(prefers-color-scheme: dark)').addEventListener('change', e => {
-                if (!localStorage.getItem('theme')) {
-                    this.setTheme(e.matches ? 'dark' : 'light');
-                }
-            });
+            // Default to light mode
+            this.setTheme('light');
         }
     }
 

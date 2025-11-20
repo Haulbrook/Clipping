@@ -178,11 +178,16 @@ body {
 .sidebar.collapsed .nav-badge,
 .sidebar.collapsed .nav-section h3,
 .sidebar.collapsed .user-details,
-.sidebar.collapsed .recent-queries {
+.sidebar.collapsed .recent-queries,
+.sidebar.collapsed .settings-btn {
   display: none;
 }
 
 .sidebar.collapsed .logo {
+  justify-content: center;
+}
+
+.sidebar.collapsed .sidebar-header {
   justify-content: center;
 }
 
@@ -192,6 +197,10 @@ body {
 }
 
 .sidebar.collapsed .user-info {
+  justify-content: center;
+}
+
+.sidebar.collapsed .sidebar-footer {
   justify-content: center;
 }
 

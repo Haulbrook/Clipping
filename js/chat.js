@@ -174,6 +174,17 @@ class ChatManager {
             }
         }
 
+        // Try OpenAI first if API key is configured
+        const hasOpenAI = localStorage.getItem('openaiApiKey');
+        if (hasOpenAI) {
+            try {
+                return await this.processWithOpenAI(message, operationId);
+            } catch (error) {
+                console.error('OpenAI processing failed, falling back to keyword matching:', error);
+                // Fall through to keyword matching below
+            }
+        }
+
         try {
             // Step 2: Check if query is complex and apply Deconstruction & Rebuild skill
             if (this.deconstructionSkill) {
@@ -355,6 +366,126 @@ class ChatManager {
         }
 
         return response;
+    }
+
+    /**
+     * Process message using OpenAI
+     */
+    async processWithOpenAI(message, operationId) {
+        const api = window.app?.api;
+        if (!api) {
+            throw new Error('API manager not available');
+        }
+
+        // Build context for OpenAI
+        const context = {
+            history: this.messageHistory.slice(-10).map(m => ({
+                role: m.sender === 'user' ? 'user' : 'assistant',
+                content: m.content
+            })),
+            tools: this.getAvailableTools(),
+            currentTime: new Date().toISOString()
+        };
+
+        // Call OpenAI
+        const aiResponse = await api.callOpenAI(message, context);
+
+        // Handle function calls
+        if (aiResponse.type === 'function_call') {
+            return await this.handleOpenAIFunctionCall(aiResponse, operationId);
+        }
+
+        // Regular message response
+        const response = {
+            content: aiResponse.content,
+            type: 'ai_response',
+            usage: aiResponse.usage
+        };
+
+        // Complete operation successfully
+        if (this.appleOverseer && operationId) {
+            this.appleOverseer.completeOperation(operationId, {
+                success: true,
+                data: response,
+                tokensUsed: aiResponse.usage?.total_tokens
+            });
+        }
+
+        return response;
+    }
+
+    /**
+     * Handle OpenAI function calls
+     */
+    async handleOpenAIFunctionCall(aiResponse, operationId) {
+        const { function: functionName, arguments: args } = aiResponse;
+
+        let result = '';
+        let toolId = null;
+        let shouldOpenTool = false;
+
+        switch (functionName) {
+            case 'open_tool':
+                toolId = args.toolId;
+                shouldOpenTool = true;
+                result = `Opening ${this.getToolName(toolId)}... ${args.reason || ''}`;
+                break;
+
+            case 'search_inventory':
+                result = `Searching inventory for "${args.query}"...\n\nTo see detailed results, I'll open the Clippings inventory tool.`;
+                toolId = 'inventory';
+                shouldOpenTool = true;
+                break;
+
+            case 'check_crew_location':
+                result = `Checking crew location for "${args.query}"...\n\nOpening the Chess Map to show crew locations.`;
+                toolId = 'chessmap';
+                shouldOpenTool = true;
+                break;
+
+            default:
+                result = `Function ${functionName} executed with arguments: ${JSON.stringify(args)}`;
+        }
+
+        // Complete operation
+        if (this.appleOverseer && operationId) {
+            this.appleOverseer.completeOperation(operationId, {
+                success: true,
+                function: functionName,
+                arguments: args
+            });
+        }
+
+        return {
+            content: result,
+            type: 'function_result',
+            toolId,
+            shouldOpenTool,
+            toolName: this.getToolName(toolId)
+        };
+    }
+
+    /**
+     * Get available tools for context
+     */
+    getAvailableTools() {
+        const config = window.app?.config?.services;
+        if (!config) return [];
+
+        return Object.entries(config).map(([id, tool]) => ({
+            id,
+            name: tool.name,
+            description: tool.description,
+            available: !!tool.url
+        }));
+    }
+
+    /**
+     * Get tool name by ID
+     */
+    getToolName(toolId) {
+        const config = window.app?.config?.services;
+        return config?.[toolId]?.name || toolId;
     }
 
     determineToolRoute(message) {

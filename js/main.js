@@ -949,6 +949,13 @@ Recommendations: ${report.recommendations.length}
             enableForwardThinkerSkill: document.getElementById('enableForwardThinkerSkill')?.checked ?? true
         };
 
+        // Save OpenAI API Key separately (more secure)
+        const openaiApiKey = document.getElementById('openaiApiKey');
+        if (openaiApiKey && openaiApiKey.value && openaiApiKey.value.trim() !== '') {
+            localStorage.setItem('openaiApiKey', openaiApiKey.value.trim());
+            console.log('✅ OpenAI API key saved');
+        }
+
         // Save to localStorage
         localStorage.setItem('dashboardSettings', JSON.stringify(settings));
         localStorage.setItem('inventoryUrl', settings.services.inventory.url);

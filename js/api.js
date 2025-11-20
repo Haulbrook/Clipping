@@ -126,6 +126,163 @@ class APIManager {
         return data.response;
     }
 
+    /**
+     * OpenAI Integration
+     * Calls OpenAI API for intelligent chat responses
+     */
+    async callOpenAI(message, context = {}) {
+        const apiKey = localStorage.getItem('openaiApiKey');
+
+        if (!apiKey) {
+            throw new Error('OpenAI API key not configured. Please add it in Settings.');
+        }
+
+        // Build conversation history for context
+        const messages = [
+            {
+                role: 'system',
+                content: this.getOpenAISystemPrompt(context)
+            }
+        ];
+
+        // Add conversation history if provided
+        if (context.history && Array.isArray(context.history)) {
+            messages.push(...context.history.slice(-10)); // Last 10 messages for context
+        }
+
+        // Add current message
+        messages.push({
+            role: 'user',
+            content: message
+        });
+
+        try {
+            const response = await fetch('https://api.openai.com/v1/chat/completions', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Authorization': `Bearer ${apiKey}`
+                },
+                body: JSON.stringify({
+                    model: 'gpt-4o-mini', // Using mini for cost-effectiveness; can upgrade to gpt-4 if needed
+                    messages: messages,
+                    temperature: 0.7,
+                    max_tokens: 800,
+                    functions: this.getOpenAIFunctions(context),
+                    function_call: 'auto'
+                })
+            });
+
+            if (!response.ok) {
+                const error = await response.json();
+                throw new Error(error.error?.message || 'OpenAI API request failed');
+            }
+
+            const data = await response.json();
+
+            // Handle function calls
+            if (data.choices[0].message.function_call) {
+                return {
+                    type: 'function_call',
+                    function: data.choices[0].message.function_call.name,
+                    arguments: JSON.parse(data.choices[0].message.function_call.arguments),
+                    message: data.choices[0].message
+                };
+            }
+
+            return {
+                type: 'message',
+                content: data.choices[0].message.content,
+                usage: data.usage
+            };
+
+        } catch (error) {
+            console.error('OpenAI API error:', error);
+            throw error;
+        }
+    }
+
+    /**
+     * Get system prompt for OpenAI based on context
+     */
+    getOpenAISystemPrompt(context) {
+        const tools = context.tools || [];
+        const toolsList = tools.map(t => `- ${t.name}: ${t.description}`).join('\n');
+
+        return `You are a helpful AI assistant for Deep Roots Landscape Operations Dashboard.
+
+You help manage:
+- Inventory (plants, materials, equipment)
+- Crew scheduling and assignments
+- Equipment checkout and tracking
+- Logistics and crew location mapping
+- Equipment repair vs replace decisions
+
+Available tools:
+${toolsList || 'No tools currently available'}
+
+Current date/time: ${new Date().toLocaleString()}
+
+Be concise but helpful. When users ask about specific data, acknowledge that you need to access the tool to get real-time information. Suggest opening the relevant tool when appropriate.
+
+If asked to perform an action, use the available functions to help automate tasks.`;
+    }
+
+    /**
+     * Define functions that OpenAI can call
+     */
+    getOpenAIFunctions(context) {
+        return [
+            {
+                name: 'open_tool',
+                description: 'Open a specific operations tool in the dashboard',
+                parameters: {
+                    type: 'object',
+                    properties: {
+                        toolId: {
+                            type: 'string',
+                            enum: ['inventory', 'grading', 'scheduler', 'tools', 'chessmap'],
+                            description: 'The ID of the tool to open'
+                        },
+                        reason: {
+                            type: 'string',
+                            description: 'Why this tool should be opened'
+                        }
+                    },
+                    required: ['toolId']
+                }
+            },
+            {
+                name: 'search_inventory',
+                description: 'Search for items in the inventory system',
+                parameters: {
+                    type: 'object',
+                    properties: {
+                        query: {
+                            type: 'string',
+                            description: 'The search term (plant name, material, equipment)'
+                        }
+                    },
+                    required: ['query']
+                }
+            },
+            {
+                name: 'check_crew_location',
+                description: 'Check the location of crew members or find nearest crew',
+                parameters: {
+                    type: 'object',
+                    properties: {
+                        query: {
+                            type: 'string',
+                            description: 'What to search for (crew member name, location, or "nearest")'
+                        }
+                    },
+                    required: ['query']
+                }
+            }
+        ];
+    }
+
     // Generic HTTP methods
     async makeRequest(method, url, data = null, options = {}) {
         const cacheKey = `${method}:${url}:${JSON.stringify(data)}`;

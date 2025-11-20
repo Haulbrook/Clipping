@@ -269,6 +269,15 @@ class UIManager {
             if (chessmapUrl) chessmapUrl.value = config.chessmap?.url || '';
         }
 
+        // Load OpenAI API Key
+        const openaiApiKey = document.getElementById('openaiApiKey');
+        if (openaiApiKey) {
+            const savedKey = localStorage.getItem('openaiApiKey');
+            if (savedKey) {
+                openaiApiKey.value = savedKey;
+            }
+        }
+
         // Load theme preference
         const darkMode = document.getElementById('darkMode');
         if (darkMode) {

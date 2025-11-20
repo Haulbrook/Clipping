@@ -223,9 +223,17 @@ ${toolsList || 'No tools currently available'}
 
 Current date/time: ${new Date().toLocaleString()}
 
-Be concise but helpful. When users ask about specific data, acknowledge that you need to access the tool to get real-time information. Suggest opening the relevant tool when appropriate.
+IMPORTANT INSTRUCTIONS:
+- When users ask about inventory, crew locations, scheduling, or tools, you MUST use the appropriate function to open the tool automatically
+- Do NOT just say you will open a tool - actually call the function
+- Always prefer using functions over just describing what you would do
+- Be brief - the user will see the tool open automatically
 
-If asked to perform an action, use the available functions to help automate tasks.`;
+Examples:
+User: "show me the crew map" → Call open_tool with toolId='chessmap'
+User: "what tools do I need?" → Call open_tool with toolId='tools'
+User: "find boxwood" → Call search_inventory with query='boxwood'
+User: "schedule tomorrow" → Call open_tool with toolId='scheduler'`;
     }
 
     /**
@@ -235,18 +243,18 @@ If asked to perform an action, use the available functions to help automate task
         return [
             {
                 name: 'open_tool',
-                description: 'Open a specific operations tool in the dashboard',
+                description: 'REQUIRED: Use this to open any dashboard tool when users ask about inventory, scheduling, tools, crew, or locations. Always call this instead of just describing what you would do.',
                 parameters: {
                     type: 'object',
                     properties: {
                         toolId: {
                             type: 'string',
                             enum: ['inventory', 'grading', 'scheduler', 'tools', 'chessmap'],
-                            description: 'The ID of the tool to open'
+                            description: 'Which tool to open: inventory (plants/materials), grading (repair vs replace), scheduler (crew scheduling), tools (equipment checkout), chessmap (crew locations/map)'
                         },
                         reason: {
                             type: 'string',
-                            description: 'Why this tool should be opened'
+                            description: 'Brief reason for opening this tool'
                         }
                     },
                     required: ['toolId']
@@ -254,13 +262,13 @@ If asked to perform an action, use the available functions to help automate task
             },
             {
                 name: 'search_inventory',
-                description: 'Search for items in the inventory system',
+                description: 'Search the inventory database for plants, materials, or equipment. Use this when users ask "what do we have", "find X", "do we have X", etc.',
                 parameters: {
                     type: 'object',
                     properties: {
                         query: {
                             type: 'string',
-                            description: 'The search term (plant name, material, equipment)'
+                            description: 'The item to search for (e.g., "boxwood", "mulch", "shovels")'
                         }
                     },
                     required: ['query']
@@ -268,13 +276,13 @@ If asked to perform an action, use the available functions to help automate task
             },
             {
                 name: 'check_crew_location',
-                description: 'Check the location of crew members or find nearest crew',
+                description: 'Find crew locations or the nearest crew to a location. Use when users ask "where is", "find crew", "nearest crew", etc.',
                 parameters: {
                     type: 'object',
                     properties: {
                         query: {
                             type: 'string',
-                            description: 'What to search for (crew member name, location, or "nearest")'
+                            description: 'Location or search query (e.g., "downtown", "nearest", "crew 3")'
                         }
                     },
                     required: ['query']

@@ -132,13 +132,11 @@ class ChatManager {
             // Add assistant response
             this.addMessage(response.content, 'assistant', response.type);
             
-            // If routed to a tool, optionally open it
+            // If routed to a tool, automatically open it
             if (response.toolId && response.shouldOpenTool) {
                 setTimeout(() => {
-                    if (confirm(`Would you like to open the ${response.toolName} tool?`)) {
-                        window.app.openTool(response.toolId);
-                    }
-                }, 1000);
+                    window.app.openTool(response.toolId);
+                }, 500);
             }
             
         } catch (error) {
@@ -415,23 +413,23 @@ class ChatManager {
             case 'open_tool':
                 toolId = args.toolId;
                 shouldOpenTool = true;
-                result = `Opening ${this.getToolName(toolId)}... ${args.reason || ''}`;
+                result = `Opening ${this.getToolName(toolId)}...`;
                 break;
 
             case 'search_inventory':
-                result = `Searching inventory for "${args.query}"...\n\nTo see detailed results, I'll open the Clippings inventory tool.`;
+                result = `Searching for "${args.query}"...`;
                 toolId = 'inventory';
                 shouldOpenTool = true;
                 break;
 
             case 'check_crew_location':
-                result = `Checking crew location for "${args.query}"...\n\nOpening the Chess Map to show crew locations.`;
+                result = `Finding crew near "${args.query}"...`;
                 toolId = 'chessmap';
                 shouldOpenTool = true;
                 break;
 
             default:
-                result = `Function ${functionName} executed with arguments: ${JSON.stringify(args)}`;
+                result = `Executing ${functionName}...`;
         }
 
         // Complete operation

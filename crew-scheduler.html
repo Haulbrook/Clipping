@@ -149,11 +149,11 @@
         }
 
         .section-title {
-            font-size: 1.2em;
+            font-size: 1em;
             font-weight: 600;
             color: var(--gray-900);
-            margin-bottom: 15px;
-            padding-bottom: 8px;
+            margin-bottom: 12px;
+            padding-bottom: 6px;
             border-bottom: 2px solid var(--brand-primary);
         }
 
@@ -164,39 +164,41 @@
 
         .resources-grid {
             display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-            gap: 12px;
+            grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
+            gap: 10px;
             margin-bottom: 20px;
         }
 
         .resource-category {
             background: var(--gray-50);
-            border-radius: 8px;
-            padding: 12px;
+            border-radius: 6px;
+            padding: 8px;
             box-shadow: var(--shadow-sm);
         }
 
         .category-header {
-            font-size: 1em;
+            font-size: 0.8em;
             font-weight: 600;
             color: var(--gray-900);
-            margin-bottom: 10px;
+            margin-bottom: 8px;
             display: flex;
             align-items: center;
-            gap: 8px;
+            gap: 6px;
+            text-align: center;
+            justify-content: center;
         }
 
         .card-container {
             display: flex;
             flex-direction: column;
-            gap: 6px;
-            min-height: 60px;
+            gap: 5px;
+            min-height: 50px;
         }
 
-        /* Draggable Cards - Compact */
+        /* Draggable Cards - Playing Card Style */
         .card {
             background: white;
-            padding: 8px 12px;
+            padding: 6px 8px;
             border-radius: 6px;
             box-shadow: var(--shadow-sm);
             cursor: move;
@@ -204,7 +206,10 @@
             border-left: 3px solid;
             font-weight: 500;
             user-select: none;
-            font-size: 0.85em;
+            font-size: 0.75em;
+            text-align: center;
+            line-height: 1.2;
+            word-break: break-word;
         }
 
         .card:hover {
@@ -254,10 +259,10 @@
         .card.multi-use::after {
             content: '∞';
             position: absolute;
-            right: 8px;
+            right: 6px;
             top: 50%;
             transform: translateY(-50%);
-            font-size: 1em;
+            font-size: 0.9em;
             opacity: 0.4;
         }
 
@@ -268,14 +273,14 @@
 
         .crews-container {
             display: grid;
-            grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
-            gap: 15px;
+            grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
+            gap: 10px;
         }
 
         .crew-card {
             background: var(--gray-50);
-            border-radius: 8px;
-            padding: 12px;
+            border-radius: 6px;
+            padding: 8px;
             box-shadow: var(--shadow-md);
             border: 2px solid var(--gray-200);
         }
@@ -284,13 +289,13 @@
             display: flex;
             justify-content: space-between;
             align-items: center;
-            margin-bottom: 10px;
-            padding-bottom: 8px;
+            margin-bottom: 8px;
+            padding-bottom: 6px;
             border-bottom: 2px solid var(--brand-primary);
         }
 
         .crew-name {
-            font-size: 1.1em;
+            font-size: 0.9em;
             font-weight: 600;
             color: var(--brand-primary);
         }
@@ -307,11 +312,11 @@
         }
 
         .crew-dropzone {
-            min-height: 50px;
+            min-height: 40px;
             border: 2px dashed var(--gray-300);
             border-radius: 6px;
-            padding: 8px;
-            margin-bottom: 8px;
+            padding: 6px;
+            margin-bottom: 6px;
             background: white;
             transition: all 0.2s ease;
         }
@@ -323,23 +328,25 @@
         }
 
         .crew-dropzone-label {
-            font-size: 0.75em;
+            font-size: 0.7em;
             font-weight: 600;
             color: var(--gray-600);
-            margin-bottom: 6px;
+            margin-bottom: 5px;
             display: flex;
             align-items: center;
-            gap: 4px;
+            justify-content: center;
+            gap: 3px;
+            text-align: center;
         }
 
         .crew-dropzone.has-cards .crew-dropzone-label {
-            margin-bottom: 6px;
+            margin-bottom: 5px;
         }
 
         .crew-cards {
             display: flex;
             flex-direction: column;
-            gap: 6px;
+            gap: 5px;
         }
 
         .crew-dropzone .card {

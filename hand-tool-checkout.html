@@ -493,19 +493,126 @@
         let expandedStacks = new Set();
         let draggedTool = null;
 
-        // Initialize with default tools
+        // Initialize with default tools - Imported from Google Sheets Inventory
         function getDefaultTools() {
             return [
-                { id: 1, type: 'Shovel', name: 'Shovel #1', tag: 'T-001', crewId: null },
-                { id: 2, type: 'Shovel', name: 'Shovel #2', tag: 'T-002', crewId: null },
-                { id: 3, type: 'Shovel', name: 'Shovel #3', tag: 'T-003', crewId: null },
-                { id: 4, type: 'Rake', name: 'Rake #1', tag: 'T-004', crewId: null },
-                { id: 5, type: 'Rake', name: 'Rake #2', tag: 'T-005', crewId: null },
-                { id: 6, type: 'Wheelbarrow', name: 'Wheelbarrow #1', tag: 'T-006', crewId: null },
-                { id: 7, type: 'Wheelbarrow', name: 'Wheelbarrow #2', tag: 'T-007', crewId: null },
-                { id: 8, type: 'Pruning Shears', name: 'Pruning Shears #1', tag: 'T-008', crewId: null },
-                { id: 9, type: 'Pruning Shears', name: 'Pruning Shears #2', tag: 'T-009', crewId: null },
-                { id: 10, type: 'Hedge Trimmer', name: 'Hedge Trimmer #1', tag: 'T-010', crewId: null }
+                // Hammers (14 tools)
+                { id: 1, type: 'Claw Hammer', name: 'Claw Hammer #1', tag: 'T-001', crewId: null },
+                { id: 2, type: 'Claw Hammer', name: 'Claw Hammer #2', tag: 'T-002', crewId: null },
+                { id: 3, type: 'Claw Hammer', name: 'Claw Hammer #3', tag: 'T-003', crewId: null },
+                { id: 4, type: 'Claw Hammer', name: 'Claw Hammer #4', tag: 'T-004', crewId: null },
+                { id: 5, type: 'Claw Hammer', name: 'Claw Hammer #5', tag: 'T-005', crewId: null },
+                { id: 6, type: 'Mini Sledge', name: 'Mini Sledge #1', tag: 'T-006', crewId: null },
+                { id: 7, type: 'Mini Sledge', name: 'Mini Sledge #2', tag: 'T-007', crewId: null },
+                { id: 8, type: 'Dead Blow', name: 'Dead Blow #1', tag: 'T-008', crewId: null },
+                { id: 9, type: 'Dead Blow', name: 'Dead Blow #2', tag: 'T-009', crewId: null },
+                { id: 10, type: 'Dead Blow', name: 'Dead Blow #3', tag: 'T-010', crewId: null },
+                { id: 11, type: 'Dead Blow', name: 'Dead Blow #4', tag: 'T-011', crewId: null },
+                { id: 12, type: 'Framing Hammer', name: 'Framing Hammer #1', tag: 'T-012', crewId: null },
+                { id: 13, type: 'Framing Hammer', name: 'Framing Hammer #2', tag: 'T-013', crewId: null },
+                { id: 14, type: 'Framing Hammer', name: 'Framing Hammer #3', tag: 'T-014', crewId: null },
+
+                // Screwdrivers (8 tools)
+                { id: 15, type: 'Phillips Screwdriver', name: 'Phillips Screwdriver #1', tag: 'T-015', crewId: null },
+                { id: 16, type: 'Phillips Screwdriver', name: 'Phillips Screwdriver #2', tag: 'T-016', crewId: null },
+                { id: 17, type: 'Flathead Screwdriver', name: 'Flathead Screwdriver #1', tag: 'T-017', crewId: null },
+                { id: 18, type: 'Flathead Screwdriver', name: 'Flathead Screwdriver #2', tag: 'T-018', crewId: null },
+                { id: 19, type: 'Impact Bit Set', name: 'Impact Bit Set #1', tag: 'T-019', crewId: null },
+                { id: 20, type: 'Impact Bit Set', name: 'Impact Bit Set #2', tag: 'T-020', crewId: null },
+                { id: 21, type: 'Multi-bit Driver', name: 'Multi-bit Driver #1', tag: 'T-021', crewId: null },
+                { id: 22, type: 'Multi-bit Driver', name: 'Multi-bit Driver #2', tag: 'T-022', crewId: null },
+
+                // Measuring (22 tools)
+                { id: 23, type: 'Level 2ft', name: 'Level 2ft #1', tag: 'T-023', crewId: null },
+                { id: 24, type: 'Level 2ft', name: 'Level 2ft #2', tag: 'T-024', crewId: null },
+                { id: 25, type: 'Level 2ft', name: 'Level 2ft #3', tag: 'T-025', crewId: null },
+                { id: 26, type: 'Level 2ft', name: 'Level 2ft #4', tag: 'T-026', crewId: null },
+                { id: 27, type: 'Level 4ft', name: 'Level 4ft #1', tag: 'T-027', crewId: null },
+                { id: 28, type: 'Level 4ft', name: 'Level 4ft #2', tag: 'T-028', crewId: null },
+                { id: 29, type: 'Level 4ft', name: 'Level 4ft #3', tag: 'T-029', crewId: null },
+                { id: 30, type: 'Level 4ft', name: 'Level 4ft #4', tag: 'T-030', crewId: null },
+                { id: 31, type: 'Level 4ft', name: 'Level 4ft #5', tag: 'T-031', crewId: null },
+                { id: 32, type: 'Level 4ft', name: 'Level 4ft #6', tag: 'T-032', crewId: null },
+                { id: 33, type: 'Framing Square', name: 'Framing Square #1', tag: 'T-033', crewId: null },
+                { id: 34, type: 'Framing Square', name: 'Framing Square #2', tag: 'T-034', crewId: null },
+                { id: 35, type: 'Framing Square', name: 'Framing Square #3', tag: 'T-035', crewId: null },
+                { id: 36, type: 'Chalk Line', name: 'Chalk Line #1', tag: 'T-036', crewId: null },
+                { id: 37, type: 'Chalk Line', name: 'Chalk Line #2', tag: 'T-037', crewId: null },
+                { id: 38, type: 'Chalk Line', name: 'Chalk Line #3', tag: 'T-038', crewId: null },
+                { id: 39, type: 'String Line', name: 'String Line #1', tag: 'T-039', crewId: null },
+                { id: 40, type: 'String Line', name: 'String Line #2', tag: 'T-040', crewId: null },
+                { id: 41, type: 'String Line', name: 'String Line #3', tag: 'T-041', crewId: null },
+                { id: 42, type: 'Tape Measure', name: 'Tape Measure #1', tag: 'T-042', crewId: null },
+                { id: 43, type: 'Tape Measure', name: 'Tape Measure #2', tag: 'T-043', crewId: null },
+                { id: 44, type: 'Tape Measure', name: 'Tape Measure #3', tag: 'T-044', crewId: null },
+
+                // Cutting (14 tools)
+                { id: 45, type: 'Machete', name: 'Machete #1', tag: 'T-045', crewId: null },
+                { id: 46, type: 'Machete', name: 'Machete #2', tag: 'T-046', crewId: null },
+                { id: 47, type: 'Machete', name: 'Machete #3', tag: 'T-047', crewId: null },
+                { id: 48, type: 'Machete', name: 'Machete #4', tag: 'T-048', crewId: null },
+                { id: 49, type: 'Machete', name: 'Machete #5', tag: 'T-049', crewId: null },
+                { id: 50, type: 'Machete', name: 'Machete #6', tag: 'T-050', crewId: null },
+                { id: 51, type: 'Machete', name: 'Machete #7', tag: 'T-051', crewId: null },
+                { id: 52, type: 'Machete', name: 'Machete #8', tag: 'T-052', crewId: null },
+                { id: 53, type: 'Machete', name: 'Machete #9', tag: 'T-053', crewId: null },
+                { id: 54, type: 'Machete', name: 'Machete #10', tag: 'T-054', crewId: null },
+                { id: 55, type: 'Utility Knife', name: 'Utility Knife #1', tag: 'T-055', crewId: null },
+                { id: 56, type: 'Hacksaw', name: 'Hacksaw #1', tag: 'T-056', crewId: null },
+                { id: 57, type: 'Tin Snips', name: 'Tin Snips #1', tag: 'T-057', crewId: null },
+                { id: 58, type: 'Tin Snips', name: 'Tin Snips #2', tag: 'T-058', crewId: null },
+
+                // Pliers (3 tools)
+                { id: 59, type: 'Pliers', name: 'Pliers #1', tag: 'T-059', crewId: null },
+                { id: 60, type: 'Needle Nose Pliers', name: 'Needle Nose Pliers #1', tag: 'T-060', crewId: null },
+                { id: 61, type: 'Wire Strippers', name: 'Wire Strippers #1', tag: 'T-061', crewId: null },
+
+                // Fastening (3 tools)
+                { id: 62, type: 'Wrench Set', name: 'Wrench Set #1', tag: 'T-062', crewId: null },
+                { id: 63, type: 'Wrench Set', name: 'Wrench Set #2', tag: 'T-063', crewId: null },
+                { id: 64, type: 'Adjustable Wrench', name: 'Adjustable Wrench #1', tag: 'T-064', crewId: null },
+
+                // Batteries (14 tools)
+                { id: 65, type: 'DeWalt 20V Battery', name: 'DeWalt 20V Battery #1', tag: 'T-065', crewId: null },
+                { id: 66, type: 'DeWalt 20V Battery', name: 'DeWalt 20V Battery #2', tag: 'T-066', crewId: null },
+                { id: 67, type: 'DeWalt 20V Battery', name: 'DeWalt 20V Battery #3', tag: 'T-067', crewId: null },
+                { id: 68, type: 'DeWalt 20V Battery', name: 'DeWalt 20V Battery #4', tag: 'T-068', crewId: null },
+                { id: 69, type: 'DeWalt 20V Battery', name: 'DeWalt 20V Battery #5', tag: 'T-069', crewId: null },
+                { id: 70, type: 'DeWalt 20V Battery', name: 'DeWalt 20V Battery #6', tag: 'T-070', crewId: null },
+                { id: 71, type: 'Milwaukee M18 Battery', name: 'Milwaukee M18 Battery #1', tag: 'T-071', crewId: null },
+                { id: 72, type: 'Milwaukee M18 Battery', name: 'Milwaukee M18 Battery #2', tag: 'T-072', crewId: null },
+                { id: 73, type: 'Milwaukee M18 Battery', name: 'Milwaukee M18 Battery #3', tag: 'T-073', crewId: null },
+                { id: 74, type: 'Milwaukee M18 Battery', name: 'Milwaukee M18 Battery #4', tag: 'T-074', crewId: null },
+                { id: 75, type: 'Milwaukee M18 Battery', name: 'Milwaukee M18 Battery #5', tag: 'T-075', crewId: null },
+                { id: 76, type: 'Milwaukee M18 Battery', name: 'Milwaukee M18 Battery #6', tag: 'T-076', crewId: null },
+                { id: 77, type: 'Battery Charger', name: 'Battery Charger #1', tag: 'T-077', crewId: null },
+                { id: 78, type: 'Battery Charger', name: 'Battery Charger #2', tag: 'T-078', crewId: null },
+
+                // Power Tools (9 tools)
+                { id: 79, type: 'Paint Gun', name: 'Paint Gun #1', tag: 'T-079', crewId: null },
+                { id: 80, type: 'Paint Gun', name: 'Paint Gun #2', tag: 'T-080', crewId: null },
+                { id: 81, type: 'Paint Gun', name: 'Paint Gun #3', tag: 'T-081', crewId: null },
+                { id: 82, type: 'Paint Gun', name: 'Paint Gun #4', tag: 'T-082', crewId: null },
+                { id: 83, type: 'Paint Gun', name: 'Paint Gun #5', tag: 'T-083', crewId: null },
+                { id: 84, type: 'Impact Driver', name: 'Impact Driver #1', tag: 'T-084', crewId: null },
+                { id: 85, type: 'Drill', name: 'Drill #1', tag: 'T-085', crewId: null },
+                { id: 86, type: 'Drill', name: 'Drill #2', tag: 'T-086', crewId: null },
+                { id: 87, type: 'Circular Saw', name: 'Circular Saw #1', tag: 'T-087', crewId: null },
+
+                // Safety (3 placeholders - currently 0 available)
+                { id: 88, type: 'Safety Glasses', name: 'Safety Glasses #1', tag: 'T-088', crewId: 'OUT_OF_SERVICE' },
+                { id: 89, type: 'Work Gloves', name: 'Work Gloves #1', tag: 'T-089', crewId: 'OUT_OF_SERVICE' },
+                { id: 90, type: 'Ear Protection', name: 'Ear Protection #1', tag: 'T-090', crewId: 'OUT_OF_SERVICE' },
+
+                // Misc (5 tools)
+                { id: 91, type: 'Tool Belt', name: 'Tool Belt #1', tag: 'T-091', crewId: null },
+                { id: 92, type: 'Extension Cord', name: 'Extension Cord #1', tag: 'T-092', crewId: null },
+                { id: 93, type: 'Extension Cord', name: 'Extension Cord #2', tag: 'T-093', crewId: null },
+                { id: 94, type: 'Extension Cord', name: 'Extension Cord #3', tag: 'T-094', crewId: null },
+                { id: 95, type: 'Extension Cord', name: 'Extension Cord #4', tag: 'T-095', crewId: null },
+                { id: 96, type: 'Extension Cord', name: 'Extension Cord #5', tag: 'T-096', crewId: null },
+                { id: 97, type: 'Work Light', name: 'Work Light #1', tag: 'T-097', crewId: null },
+                { id: 98, type: 'Air Paint Gun', name: 'Air Paint Gun #1', tag: 'T-098', crewId: null }
             ];
         }
 

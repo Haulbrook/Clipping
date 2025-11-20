@@ -166,10 +166,10 @@ class APIManager {
                 body: JSON.stringify({
                     model: 'gpt-4o-mini', // Using mini for cost-effectiveness; can upgrade to gpt-4 if needed
                     messages: messages,
-                    temperature: 0.7,
-                    max_tokens: 800,
-                    functions: this.getOpenAIFunctions(context),
-                    function_call: 'auto'
+                    temperature: 0.3,
+                    max_tokens: 500,
+                    tools: this.getOpenAITools(context),
+                    tool_choice: 'required' // Force using a tool
                 })
             });
 
@@ -180,19 +180,21 @@ class APIManager {
 
             const data = await response.json();
 
-            // Handle function calls
-            if (data.choices[0].message.function_call) {
+            // Handle tool calls (new API format)
+            if (data.choices[0].message.tool_calls && data.choices[0].message.tool_calls.length > 0) {
+                const toolCall = data.choices[0].message.tool_calls[0];
                 return {
                     type: 'function_call',
-                    function: data.choices[0].message.function_call.name,
-                    arguments: JSON.parse(data.choices[0].message.function_call.arguments),
+                    function: toolCall.function.name,
+                    arguments: JSON.parse(toolCall.function.arguments),
                     message: data.choices[0].message
                 };
             }
 
+            // Fallback for text response (shouldn't happen with tool_choice: 'required')
             return {
                 type: 'message',
-                content: data.choices[0].message.content,
+                content: data.choices[0].message.content || 'No response',
                 usage: data.usage
             };
 
@@ -237,55 +239,64 @@ User: "schedule tomorrow" → Call open_tool with toolId='scheduler'`;
     }
 
     /**
-     * Define functions that OpenAI can call
+     * Define tools (functions) that OpenAI can call - New API format
      */
-    getOpenAIFunctions(context) {
+    getOpenAITools(context) {
         return [
             {
-                name: 'open_tool',
-                description: 'REQUIRED: Use this to open any dashboard tool when users ask about inventory, scheduling, tools, crew, or locations. Always call this instead of just describing what you would do.',
-                parameters: {
-                    type: 'object',
-                    properties: {
-                        toolId: {
-                            type: 'string',
-                            enum: ['inventory', 'grading', 'scheduler', 'tools', 'chessmap'],
-                            description: 'Which tool to open: inventory (plants/materials), grading (repair vs replace), scheduler (crew scheduling), tools (equipment checkout), chessmap (crew locations/map)'
+                type: 'function',
+                function: {
+                    name: 'open_tool',
+                    description: 'Open a dashboard tool. Use this for ANY query about inventory, scheduling, tools, crew, or locations.',
+                    parameters: {
+                        type: 'object',
+                        properties: {
+                            toolId: {
+                                type: 'string',
+                                enum: ['inventory', 'grading', 'scheduler', 'tools', 'chessmap'],
+                                description: 'Which tool: inventory (plants/materials/search), grading (repair decisions), scheduler (crew/scheduling), tools (equipment checkout/what tools needed), chessmap (crew locations/nearest crew)'
+                            },
+                            reason: {
+                                type: 'string',
+                                description: 'Brief reason'
+                            }
                         },
-                        reason: {
-                            type: 'string',
-                            description: 'Brief reason for opening this tool'
-                        }
-                    },
-                    required: ['toolId']
+                        required: ['toolId']
+                    }
                 }
             },
             {
-                name: 'search_inventory',
-                description: 'Search the inventory database for plants, materials, or equipment. Use this when users ask "what do we have", "find X", "do we have X", etc.',
-                parameters: {
-                    type: 'object',
-                    properties: {
-                        query: {
-                            type: 'string',
-                            description: 'The item to search for (e.g., "boxwood", "mulch", "shovels")'
-                        }
-                    },
-                    required: ['query']
+                type: 'function',
+                function: {
+                    name: 'search_inventory',
+                    description: 'Search inventory for specific items.',
+                    parameters: {
+                        type: 'object',
+                        properties: {
+                            query: {
+                                type: 'string',
+                                description: 'Item to search'
+                            }
+                        },
+                        required: ['query']
+                    }
                 }
             },
             {
-                name: 'check_crew_location',
-                description: 'Find crew locations or the nearest crew to a location. Use when users ask "where is", "find crew", "nearest crew", etc.',
-                parameters: {
-                    type: 'object',
-                    properties: {
-                        query: {
-                            type: 'string',
-                            description: 'Location or search query (e.g., "downtown", "nearest", "crew 3")'
-                        }
-                    },
-                    required: ['query']
+                type: 'function',
+                function: {
+                    name: 'check_crew_location',
+                    description: 'Find crew locations or nearest crew.',
+                    parameters: {
+                        type: 'object',
+                        properties: {
+                            query: {
+                                type: 'string',
+                                description: 'Location to search'
+                            }
+                        },
+                        required: ['query']
+                    }
                 }
             }
         ];

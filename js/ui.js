@@ -37,10 +37,19 @@ class UIManager {
     }
 
     toggleSidebar() {
-        if (this.sidebarOpen) {
-            this.closeSidebar();
+        const sidebar = document.querySelector('.sidebar');
+        if (!sidebar) return;
+
+        // On desktop, toggle collapsed state
+        if (window.innerWidth > 1024) {
+            sidebar.classList.toggle('collapsed');
         } else {
-            this.openSidebar();
+            // On mobile, toggle open/close
+            if (this.sidebarOpen) {
+                this.closeSidebar();
+            } else {
+                this.openSidebar();
+            }
         }
     }
 
@@ -260,6 +269,15 @@ class UIManager {
             if (chessmapUrl) chessmapUrl.value = config.chessmap?.url || '';
         }
 
+        // Load OpenAI API Key
+        const openaiApiKey = document.getElementById('openaiApiKey');
+        if (openaiApiKey) {
+            const savedKey = localStorage.getItem('openaiApiKey');
+            if (savedKey) {
+                openaiApiKey.value = savedKey;
+            }
+        }
+
         // Load theme preference
         const darkMode = document.getElementById('darkMode');
         if (darkMode) {
@@ -287,19 +305,8 @@ class UIManager {
         if (savedTheme) {
             this.setTheme(savedTheme);
         } else {
-            // Auto-detect system preference
-            if (window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches) {
-                this.setTheme('dark');
-            }
-        }
-        
-        // Listen for system theme changes
-        if (window.matchMedia) {
-            window.matchMedia('(prefers-color-scheme: dark)').addEventListener('change', e => {
-                if (!localStorage.getItem('theme')) {
-                    this.setTheme(e.matches ? 'dark' : 'light');
-                }
-            });
+            // Default to light mode
+            this.setTheme('light');
         }
     }
 

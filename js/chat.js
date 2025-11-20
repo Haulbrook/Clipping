@@ -132,13 +132,11 @@ class ChatManager {
             // Add assistant response
             this.addMessage(response.content, 'assistant', response.type);
             
-            // If routed to a tool, optionally open it
+            // If routed to a tool, automatically open it
             if (response.toolId && response.shouldOpenTool) {
                 setTimeout(() => {
-                    if (confirm(`Would you like to open the ${response.toolName} tool?`)) {
-                        window.app.openTool(response.toolId);
-                    }
-                }, 1000);
+                    window.app.openTool(response.toolId);
+                }, 500);
             }
             
         } catch (error) {
@@ -153,24 +151,16 @@ class ChatManager {
 
     async processMessage(message) {
         let response = { content: '', type: 'general' };
-        let operationId = null;
 
-        // Step 1: Register operation with Apple Overseer
-        if (this.appleOverseer) {
-            operationId = `msg_${Date.now()}`;
-            const registration = this.appleOverseer.registerOperation(operationId, {
-                tool: 'chat',
-                action: 'processMessage',
-                user: 'current_user',
-                priority: 'normal',
-                details: { messageLength: message.length }
-            });
-
-            // Check if operation was blocked
-            if (!registration.success && registration.blocked) {
-                response.content = `🍎 **Operation Blocked by Apple Overseer**\n\n${registration.reason}\n\n**Recommendations:**\n${registration.recommendations.map(r => `• ${r}`).join('\n')}`;
-                response.type = 'overseer_blocked';
-                return response;
+        // Try OpenAI first if API key is configured
+        const hasOpenAI = localStorage.getItem('openaiApiKey');
+        if (hasOpenAI) {
+            try {
+                const result = await this.processWithOpenAI(message);
+                return result;
+            } catch (error) {
+                console.error('OpenAI processing failed, falling back to keyword matching:', error);
+                // Fall through to keyword matching below
             }
         }
 
@@ -202,31 +192,8 @@ class ChatManager {
             // Step 3: Determine which tool this message is most relevant to
             const toolRoute = this.determineToolRoute(message);
 
-            // Step 4: Validate tool operation with Apple Overseer
-            if (this.appleOverseer && toolRoute.toolId !== 'general') {
-                const toolOpId = `tool_${Date.now()}`;
-                const toolValidation = this.appleOverseer.registerOperation(toolOpId, {
-                    tool: toolRoute.toolId,
-                    action: 'query',
-                    user: 'current_user',
-                    priority: 'normal'
-                });
-
-                if (!toolValidation.success && toolValidation.blocked) {
-                    response.content = `🍎 **Tool Access Restricted**\n\n${toolValidation.reason}\n\n**Recommendations:**\n${toolValidation.recommendations.map(r => `• ${r}`).join('\n')}`;
-                    response.type = 'overseer_blocked';
-
-                    // Complete main operation
-                    if (operationId) {
-                        this.appleOverseer.completeOperation(operationId, { success: false, errors: [toolValidation.reason] });
-                    }
-
-                    return response;
-                }
-
-                // Store tool operation ID for later completion
-                response.toolOperationId = toolOpId;
-            }
+            // Note: Tool validation with Apple Overseer disabled to prevent operation buildup
+            // OpenAI handles tool routing more intelligently anyway
 
             // Step 5: Apply Forward Thinker skill to predict next steps
             let forwardThinking = null;
@@ -355,6 +322,106 @@ class ChatManager {
         }
 
         return response;
+    }
+
+    /**
+     * Process message using OpenAI
+     */
+    async processWithOpenAI(message) {
+        const api = window.app?.api;
+        if (!api) {
+            throw new Error('API manager not available');
+        }
+
+        // Build context for OpenAI
+        const context = {
+            history: this.messageHistory.slice(-10).map(m => ({
+                role: m.sender === 'user' ? 'user' : 'assistant',
+                content: m.content
+            })),
+            tools: this.getAvailableTools(),
+            currentTime: new Date().toISOString()
+        };
+
+        // Call OpenAI
+        const aiResponse = await api.callOpenAI(message, context);
+
+        // Handle function calls
+        if (aiResponse.type === 'function_call') {
+            return await this.handleOpenAIFunctionCall(aiResponse);
+        }
+
+        // Regular message response
+        return {
+            content: aiResponse.content,
+            type: 'ai_response',
+            usage: aiResponse.usage
+        };
+    }
+
+    /**
+     * Handle OpenAI function calls
+     */
+    async handleOpenAIFunctionCall(aiResponse) {
+        const { function: functionName, arguments: args } = aiResponse;
+
+        let result = '';
+        let toolId = null;
+        let shouldOpenTool = false;
+
+        switch (functionName) {
+            case 'open_tool':
+                toolId = args.toolId;
+                shouldOpenTool = true;
+                result = `Opening ${this.getToolName(toolId)}...`;
+                break;
+
+            case 'search_inventory':
+                result = `Searching for "${args.query}"...`;
+                toolId = 'inventory';
+                shouldOpenTool = true;
+                break;
+
+            case 'check_crew_location':
+                result = `Finding crew near "${args.query}"...`;
+                toolId = 'chessmap';
+                shouldOpenTool = true;
+                break;
+
+            default:
+                result = `Executing ${functionName}...`;
+        }
+
+        return {
+            content: result,
+            type: 'function_result',
+            toolId,
+            shouldOpenTool,
+            toolName: this.getToolName(toolId)
+        };
+    }
+
+    /**
+     * Get available tools for context
+     */
+    getAvailableTools() {
+        const config = window.app?.config?.services;
+        if (!config) return [];
+
+        return Object.entries(config).map(([id, tool]) => ({
+            id,
+            name: tool.name,
+            description: tool.description,
+            available: !!tool.url
+        }));
+    }
+
+    /**
+     * Get tool name by ID
+     */
+    getToolName(toolId) {
+        const config = window.app?.config?.services;
+        return config?.[toolId]?.name || toolId;
     }
 
     determineToolRoute(message) {

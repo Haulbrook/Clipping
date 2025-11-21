@@ -26,6 +26,11 @@
  * - updateInventory(data)         - Update inventory items
  * - checkLowStock()               - Get low stock alerts
  * - findDuplicates()              - Find duplicate entries
+ * - addProject(data)              - Add new project to crew schedule
+ * - updateProject(id, data)       - Update project details
+ * - archiveProject(id)            - Archive completed project
+ * - getActiveProjects()           - Get all active projects
+ * - getArchivedProjects()         - Get all archived projects
  *
  * ═══════════════════════════════════════════════════════════════════════
  */
@@ -37,9 +42,11 @@ const CONFIG = {
   INVENTORY_SHEET_ID: "18qeP1XG9sDtknL3UKc7bb2utHvnJNpYNKkfMNsSVDRQ", // Replace with your actual sheet ID
   KNOWLEDGE_BASE_SHEET_ID: "1I8Wp0xfcQCHLeJyIPsQoM2moebZUy35zNGBLzDLpl8Q", // Replace with your knowledge base sheet ID
   TRUCK_SHEET_ID: "1AmyIFL74or_Nh0QLMu_n18YosrSP9E4EA6k5MTzlq1Y", // Replace with your truck sheet ID
+  CREW_SCHEDULE_SHEET_ID: "1vSKSpjK5rsGlImaGDguwFwdnUQZwl85epgHBCelDFMRReu", // Crew Schedule Database sheet ID (extract from user's URL)
   INVENTORY_SHEET_NAME: "Sheet1",
   KNOWLEDGE_SHEET_NAME: "Sheet1",
   TRUCK_SHEET_NAME: "Master",
+  CREW_SCHEDULE_SHEET_NAME: "Sheet1",
   OPENAI_API_KEY: "", // Replace with your actual API key
   OPENAI_MODEL: "gpt-4",
   SYSTEM_PROMPT: "You are the internal operations assistant for Deep Roots Landscape, a landscaping company. " +
@@ -496,6 +503,26 @@ function doPost(e) {
       case 'getRecentActivity':
         // Return recent activity (last 5 changes)
         result = getRecentActivity(params[0] || 5);
+        break;
+
+      case 'addProject':
+        result = addProject(params[0]);
+        break;
+
+      case 'updateProject':
+        result = updateProject(params[0], params[1]);
+        break;
+
+      case 'archiveProject':
+        result = archiveProject(params[0]);
+        break;
+
+      case 'getActiveProjects':
+        result = getActiveProjects();
+        break;
+
+      case 'getArchivedProjects':
+        result = getArchivedProjects();
         break;
 
       default:
@@ -2127,39 +2154,39 @@ function mergeDuplicates(item1Name, item2Name, keepFirst) {
     const ss = SpreadsheetApp.openById(CONFIG.INVENTORY_SHEET_ID);
     const sheet = ss.getSheetByName(CONFIG.INVENTORY_SHEET_NAME);
     const data = sheet.getDataRange().getValues();
-    
+
     let item1Row = -1;
     let item2Row = -1;
-    
+
     // Find the items
     for (let i = 1; i < data.length; i++) {
       const itemName = String(data[i][0] || "").trim();
       if (itemName === item1Name) item1Row = i;
       if (itemName === item2Name) item2Row = i;
     }
-    
+
     if (item1Row === -1 || item2Row === -1) {
       return {
         success: false,
         message: "Could not find one or both items"
       };
     }
-    
+
     const keepRow = keepFirst ? item1Row : item2Row;
     const deleteRow = keepFirst ? item2Row : item1Row;
-    
+
     // Combine quantities
     const totalQuantity = (parseInt(data[item1Row][1]) || 0) + (parseInt(data[item2Row][1]) || 0);
-    
+
     // Update the kept item with combined quantity
     sheet.getRange(keepRow + 1, 2).setValue(totalQuantity);
-    
+
     // Delete the other row
     sheet.deleteRow(deleteRow + 1);
-    
+
     // Clear cache
     CacheService.getScriptCache().removeAll([]);
-    
+
     // Log the merge
     logTransaction(sheet, {
       timestamp: new Date(),
@@ -2170,17 +2197,380 @@ function mergeDuplicates(item1Name, item2Name, keepFirst) {
       newTotal: totalQuantity,
       notes: `Merged "${item1Name}" and "${item2Name}"`
     });
-    
+
     return {
       success: true,
       message: `Merged items successfully. Total quantity: ${totalQuantity}`
     };
-    
+
   } catch (error) {
     Logger.log("Error in mergeDuplicates: " + error.toString());
     return {
       success: false,
       message: "Error merging items: " + error.toString()
     };
+  }
+}
+
+// =============================
+// 📍 PROJECT MANAGEMENT FUNCTIONS
+// =============================
+
+/**
+ * Add a new project to the crew schedule database
+ * @param {Object} projectData - Project information
+ * @returns {Object} Success/error response with project ID
+ */
+function addProject(projectData) {
+  Performance.start('addProject');
+
+  try {
+    // Validate required fields
+    if (!projectData.name || !projectData.address) {
+      return ErrorHandler.createErrorResponse(
+        new Error('Project name and address are required'),
+        'addProject'
+      );
+    }
+
+    const ss = SpreadsheetApp.openById(CONFIG.CREW_SCHEDULE_SHEET_ID);
+    const sheet = ss.getSheetByName(CONFIG.CREW_SCHEDULE_SHEET_NAME);
+
+    // Get or create headers
+    const headers = sheet.getRange(1, 1, 1, sheet.getLastColumn() || 10).getValues()[0];
+    const expectedHeaders = [
+      'Project ID', 'Project Name', 'Address', 'Gate Code',
+      'Delivery Instructions', 'Truck Access', 'Drop Spot',
+      'Status', 'Latitude', 'Longitude', 'Date Created', 'Date Archived'
+    ];
+
+    // If sheet is empty or doesn't have headers, set them up
+    if (sheet.getLastRow() === 0 || headers[0] !== 'Project ID') {
+      sheet.getRange(1, 1, 1, expectedHeaders.length).setValues([expectedHeaders]);
+      sheet.getRange(1, 1, 1, expectedHeaders.length)
+        .setFontWeight('bold')
+        .setBackground('#673AB7')
+        .setFontColor('white');
+    }
+
+    // Generate project ID (timestamp-based)
+    const projectId = new Date().getTime();
+
+    // Prepare row data
+    const newRow = [
+      projectId,
+      Validator.sanitizeString(projectData.name),
+      Validator.sanitizeString(projectData.address),
+      Validator.sanitizeString(projectData.gateCode || ''),
+      Validator.sanitizeString(projectData.deliveryInstructions || ''),
+      projectData.truckAccess ? 'Yes' : 'No',
+      projectData.dropSpot ? 'Yes' : 'No',
+      'active',
+      projectData.latitude || '',
+      projectData.longitude || '',
+      new Date().toISOString(),
+      ''
+    ];
+
+    // Add the project
+    sheet.appendRow(newRow);
+
+    // Log activity
+    logActivity('added', projectData.name, `New project created at ${projectData.address}`);
+
+    Performance.end('addProject');
+
+    return {
+      success: true,
+      projectId: projectId,
+      message: `Project "${projectData.name}" added successfully`,
+      data: {
+        id: projectId,
+        name: projectData.name,
+        address: projectData.address,
+        gateCode: projectData.gateCode,
+        deliveryInstructions: projectData.deliveryInstructions,
+        truckAccess: projectData.truckAccess,
+        dropSpot: projectData.dropSpot,
+        status: 'active',
+        latitude: projectData.latitude,
+        longitude: projectData.longitude,
+        dateCreated: newRow[10]
+      }
+    };
+
+  } catch (error) {
+    Performance.end('addProject');
+    return ErrorHandler.createErrorResponse(error, 'addProject');
+  }
+}
+
+/**
+ * Update an existing project
+ * @param {string|number} projectId - The project ID
+ * @param {Object} updates - Fields to update
+ * @returns {Object} Success/error response
+ */
+function updateProject(projectId, updates) {
+  Performance.start('updateProject');
+
+  try {
+    const ss = SpreadsheetApp.openById(CONFIG.CREW_SCHEDULE_SHEET_ID);
+    const sheet = ss.getSheetByName(CONFIG.CREW_SCHEDULE_SHEET_NAME);
+    const data = sheet.getDataRange().getValues();
+
+    if (data.length < 2) {
+      return {
+        success: false,
+        message: 'No projects found in database'
+      };
+    }
+
+    // Find the project row
+    let projectRow = -1;
+    for (let i = 1; i < data.length; i++) {
+      if (String(data[i][0]) === String(projectId)) {
+        projectRow = i;
+        break;
+      }
+    }
+
+    if (projectRow === -1) {
+      return {
+        success: false,
+        message: `Project with ID ${projectId} not found`
+      };
+    }
+
+    // Update fields (column indices match the header order)
+    const updatesList = [];
+
+    if (updates.name !== undefined) {
+      sheet.getRange(projectRow + 1, 2).setValue(Validator.sanitizeString(updates.name));
+      updatesList.push('name');
+    }
+    if (updates.address !== undefined) {
+      sheet.getRange(projectRow + 1, 3).setValue(Validator.sanitizeString(updates.address));
+      updatesList.push('address');
+    }
+    if (updates.gateCode !== undefined) {
+      sheet.getRange(projectRow + 1, 4).setValue(Validator.sanitizeString(updates.gateCode));
+      updatesList.push('gate code');
+    }
+    if (updates.deliveryInstructions !== undefined) {
+      sheet.getRange(projectRow + 1, 5).setValue(Validator.sanitizeString(updates.deliveryInstructions));
+      updatesList.push('delivery instructions');
+    }
+    if (updates.truckAccess !== undefined) {
+      sheet.getRange(projectRow + 1, 6).setValue(updates.truckAccess ? 'Yes' : 'No');
+      updatesList.push('truck access');
+    }
+    if (updates.dropSpot !== undefined) {
+      sheet.getRange(projectRow + 1, 7).setValue(updates.dropSpot ? 'Yes' : 'No');
+      updatesList.push('drop spot');
+    }
+    if (updates.latitude !== undefined) {
+      sheet.getRange(projectRow + 1, 9).setValue(updates.latitude);
+      updatesList.push('coordinates');
+    }
+    if (updates.longitude !== undefined) {
+      sheet.getRange(projectRow + 1, 10).setValue(updates.longitude);
+    }
+
+    if (updatesList.length === 0) {
+      return {
+        success: false,
+        message: 'No valid updates provided'
+      };
+    }
+
+    // Log activity
+    const projectName = data[projectRow][1];
+    logActivity('updated', projectName, `Updated: ${updatesList.join(', ')}`);
+
+    Performance.end('updateProject');
+
+    return {
+      success: true,
+      message: `Project updated successfully: ${updatesList.join(', ')}`
+    };
+
+  } catch (error) {
+    Performance.end('updateProject');
+    return ErrorHandler.createErrorResponse(error, 'updateProject');
+  }
+}
+
+/**
+ * Archive a completed project
+ * @param {string|number} projectId - The project ID
+ * @returns {Object} Success/error response
+ */
+function archiveProject(projectId) {
+  Performance.start('archiveProject');
+
+  try {
+    const ss = SpreadsheetApp.openById(CONFIG.CREW_SCHEDULE_SHEET_ID);
+    const sheet = ss.getSheetByName(CONFIG.CREW_SCHEDULE_SHEET_NAME);
+    const data = sheet.getDataRange().getValues();
+
+    if (data.length < 2) {
+      return {
+        success: false,
+        message: 'No projects found in database'
+      };
+    }
+
+    // Find the project row
+    let projectRow = -1;
+    for (let i = 1; i < data.length; i++) {
+      if (String(data[i][0]) === String(projectId)) {
+        projectRow = i;
+        break;
+      }
+    }
+
+    if (projectRow === -1) {
+      return {
+        success: false,
+        message: `Project with ID ${projectId} not found`
+      };
+    }
+
+    const projectName = data[projectRow][1];
+
+    // Update status to 'archived' and set archive date
+    sheet.getRange(projectRow + 1, 8).setValue('archived'); // Status column
+    sheet.getRange(projectRow + 1, 12).setValue(new Date().toISOString()); // Date Archived column
+
+    // Log activity
+    logActivity('archived', projectName, 'Project marked as complete and archived');
+
+    Performance.end('archiveProject');
+
+    return {
+      success: true,
+      message: `Project "${projectName}" archived successfully`
+    };
+
+  } catch (error) {
+    Performance.end('archiveProject');
+    return ErrorHandler.createErrorResponse(error, 'archiveProject');
+  }
+}
+
+/**
+ * Get all active projects
+ * @returns {Object} List of active projects
+ */
+function getActiveProjects() {
+  Performance.start('getActiveProjects');
+
+  try {
+    const ss = SpreadsheetApp.openById(CONFIG.CREW_SCHEDULE_SHEET_ID);
+    const sheet = ss.getSheetByName(CONFIG.CREW_SCHEDULE_SHEET_NAME);
+    const data = sheet.getDataRange().getValues();
+
+    if (data.length < 2) {
+      return {
+        success: true,
+        projects: [],
+        message: 'No projects found'
+      };
+    }
+
+    const projects = [];
+
+    // Skip header row, iterate through data
+    for (let i = 1; i < data.length; i++) {
+      const status = String(data[i][7] || '').toLowerCase();
+
+      if (status === 'active') {
+        projects.push({
+          id: data[i][0],
+          name: data[i][1],
+          address: data[i][2],
+          gateCode: data[i][3],
+          deliveryInstructions: data[i][4],
+          truckAccess: data[i][5] === 'Yes',
+          dropSpot: data[i][6] === 'Yes',
+          status: data[i][7],
+          latitude: data[i][8],
+          longitude: data[i][9],
+          dateCreated: data[i][10],
+          dateArchived: data[i][11]
+        });
+      }
+    }
+
+    Performance.end('getActiveProjects');
+
+    return {
+      success: true,
+      projects: projects,
+      count: projects.length
+    };
+
+  } catch (error) {
+    Performance.end('getActiveProjects');
+    return ErrorHandler.createErrorResponse(error, 'getActiveProjects');
+  }
+}
+
+/**
+ * Get all archived projects
+ * @returns {Object} List of archived projects
+ */
+function getArchivedProjects() {
+  Performance.start('getArchivedProjects');
+
+  try {
+    const ss = SpreadsheetApp.openById(CONFIG.CREW_SCHEDULE_SHEET_ID);
+    const sheet = ss.getSheetByName(CONFIG.CREW_SCHEDULE_SHEET_NAME);
+    const data = sheet.getDataRange().getValues();
+
+    if (data.length < 2) {
+      return {
+        success: true,
+        projects: [],
+        message: 'No archived projects found'
+      };
+    }
+
+    const projects = [];
+
+    // Skip header row, iterate through data
+    for (let i = 1; i < data.length; i++) {
+      const status = String(data[i][7] || '').toLowerCase();
+
+      if (status === 'archived') {
+        projects.push({
+          id: data[i][0],
+          name: data[i][1],
+          address: data[i][2],
+          gateCode: data[i][3],
+          deliveryInstructions: data[i][4],
+          truckAccess: data[i][5] === 'Yes',
+          dropSpot: data[i][6] === 'Yes',
+          status: data[i][7],
+          latitude: data[i][8],
+          longitude: data[i][9],
+          dateCreated: data[i][10],
+          dateArchived: data[i][11]
+        });
+      }
+    }
+
+    Performance.end('getArchivedProjects');
+
+    return {
+      success: true,
+      projects: projects,
+      count: projects.length
+    };
+
+  } catch (error) {
+    Performance.end('getArchivedProjects');
+    return ErrorHandler.createErrorResponse(error, 'getArchivedProjects');
   }
 }

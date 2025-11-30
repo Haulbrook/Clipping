@@ -4,6 +4,29 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta name="description" content="Deep Roots Landscape Operations Dashboard - Unified access to all operational tools">
+    <meta name="theme-color" content="#2E7D32">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="default">
+    <meta name="apple-mobile-web-app-title" content="Deep Roots">
+
+    <!-- Open Graph / Facebook -->
+    <meta property="og:type" content="website">
+    <meta property="og:url" content="https://branchesv1.netlify.app/">
+    <meta property="og:title" content="Deep Roots Operations Dashboard">
+    <meta property="og:description" content="Unified landscaping operations dashboard - inventory management, crew scheduling, tool checkout, and AI-powered assistance.">
+    <meta property="og:image" content="https://branchesv1.netlify.app/images/og-image.png">
+    <meta property="og:image:width" content="1200">
+    <meta property="og:image:height" content="630">
+    <meta property="og:image:alt" content="Deep Roots Operations Dashboard - Landscaping management platform">
+
+    <!-- Twitter Card -->
+    <meta name="twitter:card" content="summary_large_image">
+    <meta name="twitter:url" content="https://branchesv1.netlify.app/">
+    <meta name="twitter:title" content="Deep Roots Operations Dashboard">
+    <meta name="twitter:description" content="Unified landscaping operations dashboard - inventory management, crew scheduling, tool checkout, and AI-powered assistance.">
+    <meta name="twitter:image" content="https://branchesv1.netlify.app/images/og-image.png">
+    <meta name="twitter:image:alt" content="Deep Roots Operations Dashboard - Landscaping management platform">
+
     <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'unsafe-inline' 'unsafe-eval'; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; style-src-elem 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com; connect-src 'self' https://script.google.com https://script.googleusercontent.com; img-src 'self' data: https:; frame-src 'self' https://script.google.com https://script.googleusercontent.com https://dailychessmap.netlify.app;">
     <title>Deep Roots Operations Dashboard</title>
     <!-- Force light mode as default -->
@@ -26,80 +49,84 @@
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
 </head>
 <body>
+    <!-- Skip to main content link for accessibility -->
+    <a href="#main-content" class="skip-link">Skip to main content</a>
+
     <!-- Loading Screen -->
-    <div id="loadingScreen" class="loading-screen">
+    <div id="loadingScreen" class="loading-screen" role="status" aria-live="polite" aria-label="Loading application">
         <div class="loading-content">
-            <div class="logo-animated">🌱</div>
+            <div class="logo-animated" aria-hidden="true">🌱</div>
             <h2>Deep Roots Operations</h2>
-            <div class="loading-dots">
+            <div class="loading-dots" aria-hidden="true">
                 <span></span>
                 <span></span>
                 <span></span>
             </div>
+            <span class="sr-only">Loading, please wait...</span>
         </div>
     </div>
 
     <!-- Main Application -->
-    <div id="app" class="app hidden">
+    <div id="app" class="app hidden" role="application" aria-label="Deep Roots Operations Dashboard">
         <!-- Sidebar -->
-        <aside id="sidebar" class="sidebar">
+        <aside id="sidebar" class="sidebar" role="complementary" aria-label="Sidebar navigation">
             <div class="sidebar-header">
                 <div class="logo">
-                    <span class="logo-icon">🌱</span>
+                    <span class="logo-icon" aria-hidden="true">🌱</span>
                     <span class="logo-text">Deep Roots</span>
                 </div>
-                <button id="sidebarToggle" class="sidebar-toggle" aria-label="Toggle sidebar">
+                <button id="sidebarToggle" class="sidebar-toggle" aria-label="Toggle sidebar" aria-expanded="true" aria-controls="sidebar">
                     <span></span>
                     <span></span>
                     <span></span>
                 </button>
             </div>
 
-            <nav class="sidebar-nav">
-                <div class="nav-section">
-                    <h3>Quick Actions</h3>
-                    <button id="dashboardBtn" class="nav-item active">
-                        <span class="nav-icon">📊</span>
+            <nav class="sidebar-nav" role="navigation" aria-label="Main navigation">
+                <div class="nav-section" role="group" aria-labelledby="quick-actions-heading">
+                    <h3 id="quick-actions-heading">Quick Actions</h3>
+                    <button id="dashboardBtn" class="nav-item active" aria-current="page">
+                        <span class="nav-icon" aria-hidden="true">📊</span>
                         <span class="nav-text">Dashboard</span>
                     </button>
-                    <button id="newChatBtn" class="nav-item">
-                        <span class="nav-icon">💬</span>
+                    <button id="newChatBtn" class="nav-item" aria-label="Start new query">
+                        <span class="nav-icon" aria-hidden="true">💬</span>
                         <span class="nav-text">New Query</span>
                     </button>
                 </div>
 
-                <div class="nav-section">
-                    <h3>Tools</h3>
-                    <button class="nav-item tool-item" data-tool="inventory">
-                        <span class="nav-icon">🌱</span>
+                <div class="nav-section" role="group" aria-labelledby="tools-heading">
+                    <h3 id="tools-heading">Tools</h3>
+                    <button class="nav-item tool-item" data-tool="inventory" aria-label="Open Inventory - Clippings">
+                        <span class="nav-icon" aria-hidden="true">🌱</span>
                         <span class="nav-text">Inventory</span>
                         <span class="nav-badge">Clippings</span>
                     </button>
-                    <button class="nav-item tool-item" data-tool="grading">
-                        <span class="nav-icon">🛠️</span>
+                    <button class="nav-item tool-item" data-tool="grading" aria-label="Open Repair vs Replace Analysis">
+                        <span class="nav-icon" aria-hidden="true">🛠️</span>
                         <span class="nav-text">Repair vs Replace</span>
                         <span class="nav-badge">Analysis</span>
                     </button>
-                    <button class="nav-item tool-item" data-tool="scheduler">
-                        <span class="nav-icon">📅</span>
+                    <button class="nav-item tool-item" data-tool="scheduler" aria-label="Open Crew Scheduler">
+                        <span class="nav-icon" aria-hidden="true">📅</span>
                         <span class="nav-text">Scheduler</span>
                         <span class="nav-badge">Crew</span>
                     </button>
-                    <button class="nav-item tool-item" data-tool="tools">
-                        <span class="nav-icon">🔧</span>
+                    <button class="nav-item tool-item" data-tool="tools" aria-label="Open Hand Tool Checkout - Rental">
+                        <span class="nav-icon" aria-hidden="true">🔧</span>
                         <span class="nav-text">Hand Tool Checkout</span>
                         <span class="nav-badge">Rental</span>
                     </button>
-                    <button class="nav-item tool-item" data-tool="chessmap">
-                        <span class="nav-icon">♟️</span>
+                    <button class="nav-item tool-item" data-tool="chessmap" aria-label="Open Chess Map and Logistics Tracking">
+                        <span class="nav-icon" aria-hidden="true">♟️</span>
                         <span class="nav-text">Chess Map & Logistics</span>
                         <span class="nav-badge">Tracking</span>
                     </button>
                 </div>
 
-                <div class="nav-section">
-                    <h3>Recent</h3>
-                    <div id="recentQueries" class="recent-queries">
+                <div class="nav-section" role="group" aria-labelledby="recent-heading">
+                    <h3 id="recent-heading">Recent</h3>
+                    <div id="recentQueries" class="recent-queries" role="list" aria-label="Recent queries">
                         <!-- Recent queries will be populated dynamically -->
                     </div>
                 </div>
@@ -107,21 +134,21 @@
 
             <div class="sidebar-footer">
                 <div class="user-info">
-                    <div class="user-avatar" id="userAvatar">👤</div>
+                    <div class="user-avatar" id="userAvatar" aria-hidden="true">👤</div>
                     <div class="user-details">
-                        <div class="user-name" id="userName">Loading...</div>
+                        <div class="user-name" id="userName" aria-live="polite">Loading...</div>
                         <div class="user-email" id="userEmail">...</div>
                     </div>
                 </div>
-                <button id="settingsBtn" class="settings-btn" aria-label="Settings">⚙️</button>
+                <button id="settingsBtn" class="settings-btn" aria-label="Open settings">⚙️</button>
             </div>
         </aside>
 
         <!-- Main Content -->
-        <main class="main-content">
+        <main id="main-content" class="main-content" role="main" aria-label="Main content area">
             <!-- Header -->
-            <header class="main-header">
-                <button id="mobileMenuBtn" class="mobile-menu-btn">
+            <header class="main-header" role="banner">
+                <button id="mobileMenuBtn" class="mobile-menu-btn" aria-label="Open mobile menu" aria-expanded="false" aria-controls="sidebar">
                     <span></span>
                     <span></span>
                     <span></span>
@@ -130,70 +157,73 @@
                     <h1 id="pageTitle">Operations Dashboard</h1>
                     <p id="pageSubtitle">What can I help you with today?</p>
                 </div>
-                <div class="header-actions">
-                    <button id="toolBackBtn" class="header-btn" style="display: none;" title="Back to Dashboard">← Back</button>
-                    <button id="toolRefreshBtn" class="header-btn" style="display: none;" title="Refresh">🔄</button>
-                    <button id="toolFullscreenBtn" class="header-btn" style="display: none;" title="Fullscreen">⛶</button>
-                    <button id="overseerBtn" class="header-btn overseer-btn" aria-label="Apple Overseer Status" title="Apple Overseer">
-                        <span class="overseer-icon">🍎</span>
-                        <span class="overseer-status-badge" id="overseerStatusBadge"></span>
+                <div class="header-actions" role="toolbar" aria-label="Page actions">
+                    <button id="toolBackBtn" class="header-btn" style="display: none;" title="Back to Dashboard" aria-label="Back to Dashboard">← Back</button>
+                    <button id="toolRefreshBtn" class="header-btn" style="display: none;" title="Refresh" aria-label="Refresh current tool">🔄</button>
+                    <button id="toolFullscreenBtn" class="header-btn" style="display: none;" title="Fullscreen" aria-label="Toggle fullscreen mode">⛶</button>
+                    <button id="overseerBtn" class="header-btn overseer-btn" aria-label="Apple Overseer Status" title="Apple Overseer" aria-haspopup="true" aria-expanded="false">
+                        <span class="overseer-icon" aria-hidden="true">🍎</span>
+                        <span class="overseer-status-badge" id="overseerStatusBadge" aria-live="polite"></span>
                     </button>
-                    <button id="helpBtn" class="header-btn" aria-label="Help">❓</button>
-                    <div class="status-indicator online" id="statusIndicator"></div>
+                    <button id="helpBtn" class="header-btn" aria-label="Open help">❓</button>
+                    <div class="status-indicator online" id="statusIndicator" role="status" aria-live="polite" aria-label="Connection status: Online"></div>
                 </div>
             </header>
 
             <!-- Dashboard View -->
-            <div id="dashboardView" class="dashboard-view">
+            <section id="dashboardView" class="dashboard-view" aria-labelledby="dashboard-heading">
+                <h2 id="dashboard-heading" class="sr-only">Dashboard Overview</h2>
                 <!-- Metrics Grid -->
-                <div class="metrics-grid" id="metricsGrid">
+                <div class="metrics-grid" id="metricsGrid" role="region" aria-label="Key metrics">
                     <!-- Metric cards will be populated dynamically by dashboard.js -->
                 </div>
 
                 <!-- Recent Activity Section -->
-                <div class="recent-activity-section">
+                <section class="recent-activity-section" aria-labelledby="activity-heading">
                     <div class="section-header">
-                        <h2>Recent Activity</h2>
+                        <h2 id="activity-heading">Recent Activity</h2>
                         <p>Last 5 inventory and fleet changes</p>
                     </div>
-                    <div class="activity-list" id="activityList">
+                    <div class="activity-list" id="activityList" role="feed" aria-label="Recent activity feed" aria-busy="true">
                         <!-- Activity items will be populated dynamically -->
-                        <div class="loading-skeleton">
+                        <div class="loading-skeleton" aria-hidden="true">
                             <div class="skeleton-item"></div>
                             <div class="skeleton-item"></div>
                             <div class="skeleton-item"></div>
                             <div class="skeleton-item"></div>
                             <div class="skeleton-item"></div>
                         </div>
+                        <span class="sr-only">Loading recent activity...</span>
                     </div>
-                </div>
-            </div>
+                </section>
+            </section>
 
             <!-- Chat Interface -->
-            <div id="chatInterface" class="chat-interface hidden">
+            <section id="chatInterface" class="chat-interface hidden" aria-labelledby="chat-heading">
+                <h2 id="chat-heading" class="sr-only">AI Assistant Chat</h2>
                 <div class="chat-container">
-                    <div id="chatHistory" class="chat-history">
+                    <div id="chatHistory" class="chat-history" role="log" aria-label="Chat history" aria-live="polite">
                         <!-- Welcome Message -->
-                        <div class="message assistant-message welcome-message">
-                            <div class="message-avatar">🌱</div>
+                        <div class="message assistant-message welcome-message" role="article">
+                            <div class="message-avatar" aria-hidden="true">🌱</div>
                             <div class="message-content">
                                 <h3>Welcome to Deep Roots Operations Dashboard</h3>
                                 <p>I can help you with:</p>
-                                <div class="quick-actions">
-                                    <button class="quick-action" data-query="Check inventory for boxwood">
-                                        <span class="action-icon">🌱</span>
+                                <div class="quick-actions" role="group" aria-label="Quick action buttons">
+                                    <button class="quick-action" data-query="Check inventory for boxwood" aria-label="Quick action: Check Inventory">
+                                        <span class="action-icon" aria-hidden="true">🌱</span>
                                         <span class="action-text">Check Inventory</span>
                                     </button>
-                                    <button class="quick-action" data-query="Grade this plant for quality">
-                                        <span class="action-icon">⭐</span>
+                                    <button class="quick-action" data-query="Grade this plant for quality" aria-label="Quick action: Grade Plants">
+                                        <span class="action-icon" aria-hidden="true">⭐</span>
                                         <span class="action-text">Grade Plants</span>
                                     </button>
-                                    <button class="quick-action" data-query="Schedule crew for tomorrow">
-                                        <span class="action-icon">📅</span>
+                                    <button class="quick-action" data-query="Schedule crew for tomorrow" aria-label="Quick action: Schedule Crew">
+                                        <span class="action-icon" aria-hidden="true">📅</span>
                                         <span class="action-text">Schedule Crew</span>
                                     </button>
-                                    <button class="quick-action" data-query="Check out hand tools">
-                                        <span class="action-icon">🔧</span>
+                                    <button class="quick-action" data-query="Check out hand tools" aria-label="Quick action: Checkout Tools">
+                                        <span class="action-icon" aria-hidden="true">🔧</span>
                                         <span class="action-text">Checkout Tools</span>
                                     </button>
                                 </div>
@@ -204,26 +234,28 @@
                     <!-- Input Area -->
                     <div class="chat-input-container">
                         <div class="chat-input-wrapper">
-                            <textarea 
-                                id="chatInput" 
-                                class="chat-input" 
+                            <label for="chatInput" class="sr-only">Type your message</label>
+                            <textarea
+                                id="chatInput"
+                                class="chat-input"
                                 placeholder="Ask about inventory, grading, scheduling, or tool checkout..."
                                 rows="1"
+                                aria-describedby="chat-input-hint"
                             ></textarea>
                             <div class="input-actions">
                                 <button id="attachBtn" class="input-btn" aria-label="Attach file">📎</button>
                                 <button id="sendBtn" class="input-btn send-btn" aria-label="Send message">
-                                    <svg viewBox="0 0 24 24" width="20" height="20">
+                                    <svg viewBox="0 0 24 24" width="20" height="20" aria-hidden="true">
                                         <path fill="currentColor" d="M2,21L23,12L2,3V10L17,12L2,14V21Z"/>
                                     </svg>
                                 </button>
                             </div>
                         </div>
                         <div class="input-footer">
-                            <span class="input-hint">Press Enter to send, Shift+Enter for new line</span>
-                            <div class="typing-indicator hidden" id="typingIndicator">
+                            <span class="input-hint" id="chat-input-hint">Press Enter to send, Shift+Enter for new line</span>
+                            <div class="typing-indicator hidden" id="typingIndicator" role="status" aria-live="polite">
                                 <span>Assistant is thinking</span>
-                                <div class="typing-dots">
+                                <div class="typing-dots" aria-hidden="true">
                                     <span></span>
                                     <span></span>
                                     <span></span>
@@ -232,41 +264,41 @@
                         </div>
                     </div>
                 </div>
-            </div>
+            </section>
 
             <!-- Tool Iframe Container -->
-            <div id="toolContainer" class="tool-container hidden">
+            <section id="toolContainer" class="tool-container hidden" aria-labelledby="toolTitle">
                 <div class="tool-header">
                     <div class="tool-info">
-                        <span class="tool-icon" id="toolIcon">🌱</span>
+                        <span class="tool-icon" id="toolIcon" aria-hidden="true">🌱</span>
                         <div class="tool-details">
                             <h2 id="toolTitle">Tool Name</h2>
                             <p id="toolDescription">Tool description</p>
                         </div>
                     </div>
-                    <div class="tool-actions">
-                        <button id="toolBackBtn" class="tool-btn">← Back to Dashboard</button>
-                        <button id="toolRefreshBtn" class="tool-btn">🔄 Refresh</button>
-                        <button id="toolFullscreenBtn" class="tool-btn">⛶ Fullscreen</button>
+                    <div class="tool-actions" role="toolbar" aria-label="Tool actions">
+                        <button id="toolBackBtn2" class="tool-btn" aria-label="Back to Dashboard">← Back to Dashboard</button>
+                        <button id="toolRefreshBtn2" class="tool-btn" aria-label="Refresh tool">🔄 Refresh</button>
+                        <button id="toolFullscreenBtn2" class="tool-btn" aria-label="Toggle fullscreen">⛶ Fullscreen</button>
                     </div>
                 </div>
                 <div class="tool-iframe-container">
-                    <iframe id="toolIframe" src="" frameborder="0"></iframe>
-                    <div class="tool-loading">
-                        <div class="loading-spinner"></div>
+                    <iframe id="toolIframe" src="" frameborder="0" title="External tool content" aria-label="Tool interface"></iframe>
+                    <div class="tool-loading" role="status" aria-live="polite">
+                        <div class="loading-spinner" aria-hidden="true"></div>
                         <p>Loading tool...</p>
                     </div>
                 </div>
-            </div>
+            </section>
         </main>
     </div>
 
     <!-- Modals -->
-    <div id="settingsModal" class="modal hidden">
+    <div id="settingsModal" class="modal hidden" role="dialog" aria-modal="true" aria-labelledby="settings-modal-title">
         <div class="modal-content">
             <div class="modal-header">
-                <h2>Settings</h2>
-                <button class="modal-close" aria-label="Close">×</button>
+                <h2 id="settings-modal-title">Settings</h2>
+                <button class="modal-close" aria-label="Close settings">×</button>
             </div>
             <div class="modal-body">
                 <div class="setting-group">
@@ -303,10 +335,13 @@
                     <h3>AI Configuration</h3>
                     <div class="setting-item">
                         <label for="openaiApiKey">🤖 OpenAI API Key:</label>
-                        <input type="password" id="openaiApiKey" placeholder="sk-...">
+                        <input type="password" id="openaiApiKey" placeholder="sk-..." autocomplete="off">
                         <p style="font-size: 12px; color: var(--text-secondary, #666); margin-top: 5px;">
-                            Enable intelligent AI chat responses. Get your key at <a href="https://platform.openai.com/api-keys" target="_blank">platform.openai.com/api-keys</a>
+                            Enable intelligent AI chat responses. Get your key at <a href="https://platform.openai.com/api-keys" target="_blank" rel="noopener noreferrer">platform.openai.com/api-keys</a>
                         </p>
+                        <div class="security-notice" style="background: #fff3cd; border: 1px solid #ffc107; border-radius: 4px; padding: 8px; margin-top: 8px; font-size: 12px;">
+                            <strong>⚠️ Security Notice:</strong> API keys stored in browser localStorage may be visible to browser extensions or scripts. For production use, consider implementing server-side API key management. Use a key with limited permissions and set spending limits in your OpenAI dashboard.
+                        </div>
                     </div>
                 </div>
                 <div class="setting-group">
@@ -345,14 +380,14 @@
     </div>
 
     <!-- Apple Overseer Panel -->
-    <div id="overseerPanel" class="overseer-panel hidden">
+    <div id="overseerPanel" class="overseer-panel hidden" role="dialog" aria-modal="false" aria-labelledby="overseer-panel-title">
         <div class="overseer-panel-header">
             <div class="overseer-panel-title">
-                <span class="overseer-icon">🍎</span>
-                <h3>Apple Overseer</h3>
-                <span class="overseer-health-badge" id="overseerHealthBadge">Healthy</span>
+                <span class="overseer-icon" aria-hidden="true">🍎</span>
+                <h3 id="overseer-panel-title">Apple Overseer</h3>
+                <span class="overseer-health-badge" id="overseerHealthBadge" role="status" aria-live="polite">Healthy</span>
             </div>
-            <button class="overseer-panel-close" id="overseerPanelClose" aria-label="Close">×</button>
+            <button class="overseer-panel-close" id="overseerPanelClose" aria-label="Close Apple Overseer panel">×</button>
         </div>
 
         <div class="overseer-panel-body">
@@ -416,7 +451,7 @@
     </div>
 
     <!-- Toast Notification Container -->
-    <div id="toastContainer" class="toast-container"></div>
+    <div id="toastContainer" class="toast-container" role="alert" aria-live="assertive" aria-atomic="true"></div>
 
     <!-- Scripts -->
     <script src="js/config.js?v=20251113"></script>
